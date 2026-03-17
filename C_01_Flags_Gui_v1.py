@@ -26,12 +26,12 @@ class StartGame:
         ]
 
         # Create labels and add them to the reference list...
-
         start_label_ref = []
+
         for count, item in enumerate(start_labels_list):
             make_label = Label(self.start_frame, text=item[0], font=item[1],
                                fg=item[2],
-                               wraplength=350, justify="left", pady=10, padx=20)
+                               wraplength=450, justify="left", pady=10, padx=20)
             make_label.grid(row=count)
 
             start_label_ref.append(make_label)
@@ -41,21 +41,24 @@ class StartGame:
         self.choose_label = start_label_ref[2]
 
         self.num_rounds_entry = Entry(self.start_frame, font=("Arial", 20, "bold"),
-                                      width=10)
-        self.num_rounds_entry.grid(row=3, column=0, padx=10, pady=10)
+                                      width=15)
+        self.num_rounds_entry.grid(row=3, column=0, padx=10)
 
-        self.num_rounds_infinite = Button(self.start_frame, font=("Arial", 20, "bold"),
-                                          fg="#000000", bg="#D2E2D3", text="Infinite", height=1)
-        self.num_rounds_infinite.grid(row=4, column=0, padx=10, pady=10)
+        # Frame button area to hold 'play' and 'difficulty' buttons
+        self.play_area_frame = Frame(self.start_frame)
+        self.play_area_frame.grid(row=5)
 
-        # Create play button
-        self.play_button = Button(self.start_frame, font=("Arial", 20, "bold"),
-                                  fg="#000000", bg="#D5E8D4", text="Play", width=10,
-                                  command=self.check_rounds)
-        self.play_button.grid(row=5, column=0)
-        self.difficulty_button = Button(self.start_frame, font=("Arial", 20, "bold"),
-                                        fg="#000000", bg="#D538D4", text="Difficulty", width=10)
-        self.difficulty_button.grid(row=6, column=0)
+        # start button list (frame | text | bg | width | row | column | command)
+        start_button_list = [
+            [self.start_frame, "Infinite", "#D2E2D3", 12, 4, 0, None],
+            [self.play_area_frame, "Play", "#D5E8D4", 7, 0, 0, self.check_rounds],
+            [self.play_area_frame, "Difficulty", "#f5f5f5", 7, 0, 1, None]
+        ]
+
+        for item in start_button_list:
+            start_button = Button(item[0], text=item[1], font=("Arial", 20, "bold"),
+                                  bg=item[2], fg="#000000", width=item[3], command=item[6])
+            start_button.grid(row=item[4], column=item[5], padx=5, pady=5)
 
     def check_rounds(self):
         """
@@ -88,6 +91,12 @@ class StartGame:
                                      font=("Arial", 12, "bold"))
             self.num_rounds_entry.config(bg="#F4CCCC")
             self.num_rounds_entry.delete(0, END)
+
+    def infinite_rounds(self):
+        """
+        Proceeds users to the round without needing to check for
+        """
+
 
 
 # main routine
