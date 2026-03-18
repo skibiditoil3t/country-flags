@@ -22,7 +22,6 @@ class StartGame:
             ["Country Flags", ("Arial", 16, "bold"), None],
             [intro_string, ("Arial", 12), None],
             [choose_string, ("Arial", 12, "bold"), "#009900"],
-
         ]
 
         # Create labels and add them to the reference list...
@@ -50,15 +49,16 @@ class StartGame:
 
         # start button list (frame | text | bg | width | row | column | command)
         start_button_list = [
-            [self.start_frame, "Infinite", "#D2E2D3", 12, 4, 0, None],
+            [self.start_frame, "Infinite", "#D2E2D3", 12, 4, 0, self.inf_rounds],
             [self.play_area_frame, "Play", "#D5E8D4", 7, 0, 0, self.check_rounds],
-            [self.play_area_frame, "Difficulty", "#f5f5f5", 7, 0, 1, None]
+            [self.play_area_frame, "Difficulty", "#f5f5f5", 7, 0, 1, self.to_diff]
         ]
 
         for item in start_button_list:
             start_button = Button(item[0], text=item[1], font=("Arial", 20, "bold"),
                                   bg=item[2], fg="#000000", width=item[3], command=item[6])
             start_button.grid(row=item[4], column=item[5], padx=5, pady=5)
+
 
     def check_rounds(self):
         """
@@ -87,17 +87,42 @@ class StartGame:
             has_errors = "yes"
 
         if has_errors == "yes":
+
             self.choose_label.config(text=error, fg="#990000",
                                      font=("Arial", 12, "bold"))
             self.num_rounds_entry.config(bg="#F4CCCC")
             self.num_rounds_entry.delete(0, END)
 
-    def infinite_rounds(self):
-        """
-        Proceeds users to the round without needing to check for
-        """
+    def inf_rounds(self):
+        # temporary success message, replace with cell to play game class
+        self.choose_label.config(text="You have chosen to play Infinite Rounds!")
 
+        # reset label and entry box (for when users come back to home screen)
+        self.choose_label.config(fg="#009900", font=("Arial", 12, "bold"))
+        self.num_rounds_entry.config(bg="#FFFFFF")
 
+    def to_diff(self):
+        """
+        Displays difficulty for questions before playing game
+        :return:
+        """
+        DisplayDiff(self)
+
+class DisplayDiff:
+
+    def __init__(self, partner):
+
+        # setup difficulty box and background colour
+        background = "#ffe6cc"
+        difficulty_box = Toplevel()
+
+        difficulty_frame = Frame(padx=10, pady=10)
+        difficulty_frame.grid()
+
+        # button list (frame | text | bg | command)
+        difficulty_buttons = [
+            []
+        ]
 
 # main routine
 if __name__ == "__main__":
