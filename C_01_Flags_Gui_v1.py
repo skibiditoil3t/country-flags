@@ -35,10 +35,6 @@ class StartGame:
 
             start_label_ref.append(make_label)
 
-        # extract choice label so that it can be changed to an
-        # error message if necessary.
-        self.choose_label = start_label_ref[2]
-
         self.num_rounds_entry = Entry(self.start_frame, font=("Arial", 20, "bold"),
                                       width=15)
         self.num_rounds_entry.grid(row=3, column=0, padx=10)
@@ -47,11 +43,16 @@ class StartGame:
         self.play_area_frame = Frame(self.start_frame)
         self.play_area_frame.grid(row=5)
 
+        self.difficulty_heading = Label(self.play_area_frame, text="Choose your diffculty",
+                                        font=("Arial", 30, "bold"))
+        self.difficulty_heading.grid(row=0, column=0)
+
         # start button list (frame | text | bg | width | row | column | command)
         start_button_list = [
             [self.start_frame, "Infinite", "#D2E2D3", 12, 4, 0, self.inf_rounds],
-            [self.play_area_frame, "Play", "#D5E8D4", 7, 0, 0, self.check_rounds],
-            [self.play_area_frame, "Difficulty", "#f5f5f5", 7, 0, 1, self.to_diff]
+            [self.play_area_frame, "Easy", "#d5e8d4", 5, 1, 1, self.check_rounds("easy")],
+            [self.play_area_frame, "Medium", "#fff2cc", 7, 1, 2, self.check_rounds("medium")],
+            [self.play_area_frame, "Hard", "#f8cecc", 5, 1, 3, self.check_rounds("hard")]
         ]
 
         for item in start_button_list:
@@ -59,8 +60,12 @@ class StartGame:
                                   bg=item[2], fg="#000000", width=item[3], command=item[6])
             start_button.grid(row=item[4], column=item[5], padx=5, pady=5)
 
+        # extract choice label to config into error message if needed
+        # extract diff. button to disable prevent multiple windows when pressed
+        self.choose_label = start_label_ref[2]
+        self.difficulty_button = start_button_list[2]
 
-    def check_rounds(self):
+    def check_rounds(self, difficulty):
         """
         Checks users have entered 1 or more rounds
         """
@@ -80,6 +85,7 @@ class StartGame:
             rounds_wanted = int(rounds_wanted)
             if rounds_wanted > 0:
                 # temporary success message, replace with cell to PlayGame class
+                self.difficulty_chosen = print(difficulty)
                 self.choose_label.config(text=f"You have chosen to play {rounds_wanted} round/s")
             else:
                 has_errors = "yes"
@@ -95,34 +101,19 @@ class StartGame:
 
     def inf_rounds(self):
         # temporary success message, replace with cell to play game class
-        self.choose_label.config(text="You have chosen to play Infinite Rounds!")
+        self.choose_label.config(text="You have chosen to play Infinite Rounds!",fg="#009900",
+                                 font=("Arial", 12, "bold"))
 
-        # reset label and entry box (for when users come back to home screen)
-        self.choose_label.config(fg="#009900", font=("Arial", 12, "bold"))
+        # reset entry box (for when users come back to home screen)
         self.num_rounds_entry.config(bg="#FFFFFF")
+        self.num_rounds_entry.delete(0, END)
+#
+# class Play:
+#
+#     def __init__(self, how_many, difficulty):
+#         pass
+#
 
-    def to_diff(self):
-        """
-        Displays difficulty for questions before playing game
-        :return:
-        """
-        DisplayDiff(self)
-
-class DisplayDiff:
-
-    def __init__(self, partner):
-
-        # setup difficulty box and background colour
-        background = "#ffe6cc"
-        difficulty_box = Toplevel()
-
-        difficulty_frame = Frame(padx=10, pady=10)
-        difficulty_frame.grid()
-
-        # button list (frame | text | bg | command)
-        difficulty_buttons = [
-            []
-        ]
 
 # main routine
 if __name__ == "__main__":
