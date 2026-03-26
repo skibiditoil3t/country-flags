@@ -1,5 +1,21 @@
+import csv
+import random
 from tkinter import *
 from functools import partial # To prevent unwanted windows
+
+def get_all_flags():
+
+    # Retrieve colours from csv file and put them in a list
+    file = open("country_flags.csv", "r")
+    all_flags = list(csv.reader(file, delimiter=","))
+    file.close()
+
+    # remove the first row
+    all_flags.pop(0)
+
+    return all_flags
+
+
 
 class StartGame:
     """ Initial Game interface (asks users how many rounds they
@@ -87,7 +103,7 @@ class StartGame:
         # temporary success message, replace with cell to play game class
         self.choose_label.config(text="You have chosen to play Infinite Rounds!",fg="#009900",
                                  font=("Arial", 12, "bold"))
-        Play()
+        Play(float('inf'))
         # reset entry box (for when users come back to home screen)
         self.num_rounds_entry.config(bg="#FFFFFF")
         self.num_rounds_entry.delete(0, END)
@@ -95,6 +111,15 @@ class StartGame:
 class Play:
 
     def __init__(self, how_many, difficulty="normal"):
+        # set up rounds for game
+        self.rounds_wanted = IntVar()
+        self.rounds_wanted = how_many
+
+        self.rounds_played = IntVar()
+        self.rounds_played.set(0)
+
+        self.rounds_won = 0
+
         self.play_box = Toplevel()
 
         self.Play_frame = Frame(self.play_box)
