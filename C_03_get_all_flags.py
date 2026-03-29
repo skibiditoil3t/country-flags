@@ -18,8 +18,6 @@ flag_images = []
 while len(round_countries) < 4:
     potential_country = random.choice(all_flags)
 
-    print(potential_country)
-    print(all_flags)
 
     if potential_country[1] not in all_flags[1]:
         round_countries.append(potential_country[0])
@@ -27,4 +25,7 @@ while len(round_countries) < 4:
         round_flag_codes.append(potential_country[2])
         flag_images.append(potential_country[3])
 
-
+print("Round countries", round_countries)
+print("Round capitals", round_capitals)
+print("Flag codes", round_flag_codes)
+print("Flag images", flag_images)
