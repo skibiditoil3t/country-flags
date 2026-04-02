@@ -46,7 +46,8 @@ class StartGame:
         self.start_frame.grid()
 
         # Strings for labels
-        intro_string = ("In each round you will have to guess the flag of a country (or capital if a harder difficulty is chosen). \n\nYour goal is to correctly guess the capital of a country and win the round."
+        intro_string = ("In each round you will have to guess the flag of a country (or capital if a harder difficulty is chosen). "
+                        "\n\nYour goal is to correctly guess the country and win the round with your knowledge!"
                         "\n\nTo begin, please enter how many rounds you'd like to play and then choose your difficulty.")
 
         choose_string = "How many rounds do you want to play?"
@@ -56,6 +57,7 @@ class StartGame:
             ["Country Flags", ("Arial", 16, "bold"), None],
             [intro_string, ("Arial", 12), None],
             [choose_string, ("Arial", 12, "bold"), "#009900"],
+            ["Choose your difficulty", ("Arial", 17, "bold"), None]
         ]
 
         # Create labels and add them to the reference list...
@@ -71,23 +73,22 @@ class StartGame:
 
         self.num_rounds_entry = Entry(self.start_frame, font=("Arial", 20, "bold"),
                                       width=15)
-        self.num_rounds_entry.grid(row=3, column=0, padx=10)
+        self.num_rounds_entry.grid(row=3, padx=10)
 
         # infinite button
         self.infinite_button = Button(self.start_frame, text="Infinite",font=("Arial", 15, "bold"),
-                                      width=18, bg="#DAE8FC", height=1, command=self.inf_rounds)
-        self.infinite_button.grid(row=4, column=0)
+                                      width=18, bg="#DAE8FC", command=self.inf_rounds)
+        self.infinite_button.grid(row=4)
 
-        # difficulty buttons
         self.difficulty_heading = Label(self.start_frame, text="Choose your difficulty",
                                         font=("Arial", 17, "bold"))
-        self.difficulty_heading.grid(row=5, column=0)
+        self.difficulty_heading.grid(row=5)
 
         # make button frame so can be placed on same row
         self.diff_button_frame = Frame(self.start_frame)
         self.diff_button_frame.grid(row=6)
 
-        # button list (frame | text | bg | command | column)
+        # difficulty button list (frame | text | bg | command | column)
         difficulty_button_list = [
             [self.diff_button_frame, "Normal", "#d5e8d4", lambda: self.check_rounds("normal"), 0],
             [self.diff_button_frame, "Medium", "#fff2cc", lambda: self.check_rounds("medium"), 1],
@@ -136,13 +137,7 @@ class StartGame:
             self.num_rounds_entry.delete(0, END)
 
     def inf_rounds(self):
-        # temporary success message, replace with cell to play game class
-        self.choose_label.config(text="You have chosen to play Infinite Rounds!",fg="#009900",
-                                 font=("Arial", 12, "bold"))
         Play(float('inf'))
-        # reset entry box (for when users come back to home screen)
-        self.num_rounds_entry.config(bg="#FFFFFF")
-        self.num_rounds_entry.delete(0, END)
 
 class Play:
 
@@ -153,10 +148,9 @@ class Play:
         self.rounds_wanted = how_many
 
         self.rounds_played = IntVar()
-        self.rounds_played = 0
+        self.rounds_played.set(0)
 
         self.difficulty_playing = difficulty
-        print(self.difficulty_playing)
 
         self.rounds_won = 0
 
@@ -169,6 +163,16 @@ class Play:
         self.Play_frame = Frame(self.play_box)
         self.Play_frame.grid(padx=10, pady=10)
 
+        # List for Play GUI labels ( text | font | row)
+        play_labels_list = [
+
+        ]
+
+        for count, item in enumerate(play_labels_list):
+            labels
+
+            row=(count, padx=10, pady=10)
+
         self.heading_label = Label(self.Play_frame, text=f"you've chosen to play on difficulty: {difficulty}\n",
                                    font=("Arial", 20, "bold"))
         self.round_heading_label = Label(self.Play_frame, text=f"Rounds: {self.rounds_played} / {self.rounds_wanted}",
@@ -176,24 +180,27 @@ class Play:
         if how_many == float('inf'):
             self.round_heading_label.config(text="Rounds: INFINITE!!!!")
 
-        self.heading_label.grid(row=0, column=0)
-        self.round_heading_label.grid(row=1, column=0)
+        self.heading_label.grid(row=0)
+        self.round_heading_label.grid(row=1)
+
 
         self.end_game_button = Button(self.Play_frame, text="End", font=("Arial", 20, "bold"),
                                       command=self.close_play)
-        self.end_game_button.grid(row=3, column=0)
+        self.end_game_button.grid(row=3)
+
 
         if difficulty == "medium":
             self.capital_button = Button(self.Play_frame, text="im capital", command=self.capital)
-            self.capital_button.grid(row=2, column=0)
+            self.capital_button.grid(row=2)
 
         elif difficulty == "hard":
             self.capital_entry = Entry(self.Play_frame, width=30, font=("Arial", 20, "bold"))
-            self.capital_entry.grid(row=2, column=0)
+            self.capital_entry.grid(row=2)
+            self.capital_answer = ""
 
             self.submit_button = Button(self.Play_frame, text="Submit Answer", command=self.answer_check)
-            self.submit_button.grid(row=3, column=0)
-            self.end_game_button.grid(row=4, column=0)
+            self.submit_button.grid(row=3)
+            self.end_game_button.grid(row=4)
 
     def close_play(self):
         root.deiconify()
@@ -203,8 +210,10 @@ class Play:
         print("im the capital button")
 
     def answer_check(self):
-        self.capital_entry = self.capital_entry.get()
-        print(self.capital_entry, "what you wrote in entry")
+        # retrieve text input into field
+        self.capital_answer = self.capital_entry.get()
+        print(self.capital_answer, "what you wrote in entry")
+        self.capital_entry.delete(0, 'end')
 
 
 
