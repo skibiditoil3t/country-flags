@@ -188,29 +188,12 @@ class Play:
             self.capital_button = Button(self.Play_frame, text="im capital", command=self.capital)
             self.capital_button.grid(row=2, column=0)
 
-        elif difficulty == "hard":
-            self.capital_entry = Entry(self.Play_frame, width=30, font=("Arial", 20, "bold"))
-            self.capital_entry.grid(row=2, column=0)
-
-            self.submit_button = Button(self.Play_frame, text="Submit Answer", command=self.answer_check)
-            self.submit_button.grid(row=3, column=0)
-            self.end_game_button.grid(row=4, column=0)
-
     def close_play(self):
         root.deiconify()
         self.play_box.destroy()
 
     def capital(self):
         print("im the capital button")
-
-    def answer_check(self):
-        self.capital_entry = self.capital_entry.get()
-        print(self.capital_entry, "what you wrote in entry")
-
-
-
-
-
 
 # main routine
 if __name__ == "__main__":
