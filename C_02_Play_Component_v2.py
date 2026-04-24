@@ -92,7 +92,6 @@ class StartGame:
         difficulty_button_list = [
             [self.diff_button_frame, "Normal", "#d5e8d4", lambda: self.check_rounds("normal"), 0],
             [self.diff_button_frame, "Medium", "#fff2cc", lambda: self.check_rounds("medium"), 1],
-            [self.diff_button_frame, "Hard", "#f8cecc", lambda: self.check_rounds("hard"), 2]
         ]
 
         for item in difficulty_button_list:
@@ -167,25 +166,29 @@ class Play:
         self.play_box.protocol('WM_DELETE_WINDOW',
                                root.destroy)
 
-        self.Play_frame = Frame(self.play_box)
-        self.Play_frame.grid(padx=10, pady=10)
+        self.play_frame = Frame(self.play_box)
+        self.play_frame.grid(padx=10, pady=10)
 
-        self.heading_label = Label(self.Play_frame, text=f"you've chosen to play on difficulty: {difficulty}\n",
-                                   font=("Arial", 20, "bold"))
-        self.round_heading_label = Label(self.Play_frame, text=f"Rounds: {self.rounds_played} / {self.rounds_wanted}",
+        self.round_heading_label = Label(self.play_frame, text=f"Rounds: {self.rounds_played} / {self.rounds_wanted}",
                                          font=("Arial", 20, "bold"))
+
+        self.image_heading =
+
+        self.play_button_frame = Frame(self.play_frame)
+        self.play_button_frame.grid(row=2, padx=10, pady=10)
+
+
         if how_many == float('inf'):
             self.round_heading_label.config(text="Rounds: INFINITE!!!!")
 
-        self.heading_label.grid(row=0, column=0)
-        self.round_heading_label.grid(row=1, column=0)
+        self.round_heading_label.grid(row=0, column=0)
 
-        self.end_game_button = Button(self.Play_frame, text="End", font=("Arial", 20, "bold"),
+        self.end_game_button = Button(self.play_frame, text="End", font=("Arial", 20, "bold"),
                                       command=self.close_play)
         self.end_game_button.grid(row=3, column=0)
 
         if difficulty == "medium":
-            self.capital_button = Button(self.Play_frame, text="im capital", command=self.capital)
+            self.capital_button = Button(self.play_button_frame, text="im capital", command=self.capital)
             self.capital_button.grid(row=2, column=0)
 
     def close_play(self):
