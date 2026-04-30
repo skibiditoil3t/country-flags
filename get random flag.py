@@ -22,7 +22,7 @@ def get_country():
     round_countries = []
     round_capitals = []
 
-    # loop until we have four flags with different names
+    # loop until we have four countries with different names
     while len(round_countries) < 4:
         potential_country = random.choice(all_flags)
 
@@ -30,10 +30,7 @@ def get_country():
             round_countries.append(potential_country[0])
             round_capitals.append(potential_country[1])
 
-        flag_code = potential_country[2]
-        flag_image = potential_country[3]
-
-    return round_countries, round_capitals, flag_code, flag_image
+    return round_countries, round_capitals
 
 
 class StartGame:
@@ -154,46 +151,84 @@ class Play:
         self.rounds_wanted = how_many
 
         self.rounds_played = IntVar()
-        self.rounds_played = 0
+        self.rounds_played.set(0)
 
+        # set up the difficulty
         self.difficulty_playing = difficulty
-        print(self.difficulty_playing)
 
-        self.rounds_won = 0
-
+        # setup Play frame
         self.play_box = Toplevel()
+
+        self.play_frame = Frame(self.play_box)
+        self.play_frame.grid(padx=10, pady=10)
 
         # if 'x' at window is pressed, end all processes
         self.play_box.protocol('WM_DELETE_WINDOW',
                                root.destroy)
 
-        # setup Play frame
-        self.play_frame = Frame(self.play_box)
-        self.play_frame.grid(padx=10, pady=10)
+        # lists for Play labels / buttons
+        all_answers = []
+        control_button_ref = []
+        play_label_ref = []
 
-        # labels for rounds
-        self.round_heading_label = Label(self.play_frame, text=f"Rounds: {self.rounds_played} / {self.rounds_wanted}",
-                                         font=("Arial", 20, "bold"))
-        if how_many == float('inf'):
-            self.round_heading_label.config(text="Rounds: INFINITE!!!!")
 
-        self.round_heading_label.grid(row=0, column=0)
+        # round labels list (text | bg | row | font)
+        play_labels_list = [
+            ["Question: X / X", None, 0, ("Arial", 20, "bold")],
+            ["What Country Is This?", "#F5F5F5", 2, ("Arial", 12)],
+            ["Correct! It is [answer]..", "#D5E8D4", 5, ("Arial", 12)]
+        ]
+
+        for item in play_labels_list:
+            self.play_label = Label(self.play_frame, text=item[0], bg=item[1],
+                                    font=item[3])
+            self.play_label.grid(row=item[2])
+
+            play_label_ref.append(self.play_label)
+
+        # create frame for answer buttons
+        self.answer_button_frame = Frame(self.play_frame)
+        self.answer_button_frame.grid(row=3)
+
+        # creating answer buttons
+        for item in range(0, 6):
+            self.answer_button = Button(self.answer_button_frame, text="Country",
+                                       bg="#DAE8FC", font=("Arial", 15, "bold"),
+                                        command=self.close_play, width=12, height=2)
+            self.answer_button.grid(row=item // 2,
+                                    column= item % 2,
+                                    pady=2, padx=2)
+            all_answers.append(self.answer_button)
+
+        # play button list (frame, text, bg)
+        play_button_list = [
+            ["Next Round"]
+        ]
 
         # create image
-        self.round_img = "AA-Flag.gif"
-        self.photo_path = f"/users/afematam2360/OneDrive - Massey High School/Programming level 2 & 3/Flags/flag_images/{self.round_img}"
-        self.image = PhotoImage(file=self.photo_path)
+        round_img = "AA-Flag.gif"
+        photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
+                           f"Programming level 2 & 3/Flags/flag_images/{round_img}")
+        image = PhotoImage(file=photo_path)
 
-        self.image_label = Label(self.play_frame, image=self.image)
-        self.image_label.grid(row=1)
+        self.image_label = Label(self.play_frame, image=image)
+        self.image_label.image = image
+        self.image_label.grid(row=1, padx=10, pady=10)
+
+        # self.round_heading_label = Label(self.play_frame, text=f"Rounds: {self.rounds_played.get()}"
+        #                                                        f" / {self.rounds_wanted}",
+        #                                  font=("Arial", 20, "bold"))
+        # if how_many == float('inf'):
+        #     self.round_heading_label.config(text="Rounds: INFINITE!!!!")
+        #
+        # self.round_heading_label.grid(row=0, column=0)
 
         # setup main question button frame
         self.round_button_frame = Frame(self.play_frame)
         self.round_button_frame.grid(row=4, padx=10, pady=10)
 
-        self.buttons = get_all_flags()
-        for item in range(0, 4):
-            self.round_button = Button(self.round_button_frame, text=self.)
+        # for item in range(0, 4):
+        #     self.round_button = Button(self.round_button_frame, text=self.country)
 
         # self.end_game_button = Button(self.play_frame, text="End", font=("Arial", 20, "bold"),
         #                               command=self.close_play)
