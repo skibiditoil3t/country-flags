@@ -180,19 +180,22 @@ class Play:
         # extract country info for round variables
         self.round_country, self.round_capital, round_flag, round_flag_code = get_country()
 
+        # font used for most labels / buttons
+        default_font = ("Arial", 12)
+
         # round labels list (text | bg | row | font)
         play_labels_list = [
             ["Question: X / X", None, 0, ("Arial", 20, "bold")],
-            ["What Country Is This?", "#F5F5F5", 2, ("Arial", 12)],
-            ["Correct! It is [answer]..", "#D5E8D4", 6, ("Arial", 12)]
+            ["What Country Is This?", "#F5F5F5", 2, default_font],
+            ["Correct! It is [answer]..", "#D5E8D4", 6, default_font]
         ]
 
         play_label_ref = []
 
         for item in play_labels_list:
             self.play_label = Label(self.play_frame, text=item[0], bg=item[1],
-                                    font=item[3])
-            self.play_label.grid(row=item[2])
+                                    font=item[3], bd=3)
+            self.play_label.grid(row=item[2], pady=2)
 
             play_label_ref.append(self.play_label)
 
@@ -218,7 +221,8 @@ class Play:
         for item in range(0, 4):
             self.country_button = Button(self.country_button_frame, text="Country",
                                          bg="#DAE8FC", font=("Arial", 15, "bold"),
-                                         command=self.close_play, width=12, height=2)
+                                         command=partial(self.question_outcome, item), width=12, height=2,
+                                         wraplength=150, justify="center")
             self.country_button.grid(row=item // 2,
                                      column=item % 2,
                                      pady=2, padx=2)
@@ -228,37 +232,42 @@ class Play:
         self.control_button_frame = Frame(self.play_frame)
         self.control_button_frame.grid(row=8, padx=10, pady=10)
 
-        # control button list (frame, text, bg, row, column, font, command)
+        # control button list (frame, text, bg, row, column, font, command, width)
         control_button_list = [
-            [self.play_frame, "Next Round", "#FDFDFD", 7, 0, ("Arial", 16, "bold")],
-            [self.control_button_frame, "Hints", "#FDFDFD", 0, 0, ("Arial", 12, "bold")],
-            [self.control_button_frame, "Stats", "#FDFDFD", 0, 1, ("Arial", 12, "bold")],
-            [self.play_frame, "End Quiz", "#F3F3F3", 9, 0, ("Arial", 16, "bold"), self.close_play]
+            [self.play_frame, "Next Round", "#FFF2CC", 7, 0, ("Arial", 16, "bold"), self.new_question, 20],
+            [self.control_button_frame, "Hints", "#FFE6CC", 0, 0, ("Arial", 13, "bold"), None, 12],
+            [self.control_button_frame, "Stats", "#F5F5F5", 0, 1, ("Arial", 13, "bold"), None, 12],
+            [self.play_frame, "End Quiz", "#F8CECC", 9, 0, ("Arial", 16, "bold"), self.close_play, 20]
         ]
 
         for item in control_button_list:
-            self.control_button = Button(item[0], text=item[1], bg=item[2], font=item[5])
-            self.control_button.grid(row=item[3], column=item[4])
+            self.control_button = Button(item[0], text=item[1], bg=item[2], font=item[5], command=item[6],
+                                         width=item[7], bd=2, relief="raised")
+            self.control_button.grid(row=item[3], column=item[4], padx=5, pady=2)
 
         if difficulty == "medium":
             self.additional_button_frame = Frame(self.play_frame)
             self.additional_button_frame.grid(row=5)
 
-            self.capital_button = Button(self.additional_button_frame, text="im capital", command=self.capital)
+            self.capital_button = Button(self.additional_button_frame, text="im capital", command=self.capital,
+                                         font=default_font)
             self.capital_button.grid(row=0, column=0)
 
-            self.reroll_button = Button(self.additional_button_frame, text="im reroll", command=self.reroll)
+            self.reroll_button = Button(self.additional_button_frame, text="im reroll", command=self.reroll,
+                                        font=default_font)
             self.reroll_button.grid(row=0, column=1)
 
         self.new_question()
+
     def new_question(self):
         for item in self.country_button_ref:
             shuffle = random.randint(0,3)
-            item.config(text=self.round_country[0], command=self.question_outcome)
+            item.config(text=self.round_country[0])
 
-    def question_outcome(self):
-        user_choice = "yes"
-        print(f"you've picked {user_choice}")
+
+    def question_outcome(self, user_choice):
+        country_name = self.country_button_ref[user_choice].cget('text')
+        print(f"you've picked {country_name}")
 
     def close_play(self):
         # destroy play GUI and go back to StartGame GUI
