@@ -191,7 +191,6 @@ class Play:
         ]
 
         play_label_ref = []
-
         for item in play_labels_list:
             self.play_label = Label(self.play_frame, text=item[0], bg=item[1],
                                     font=item[3], bd=3)
@@ -199,10 +198,15 @@ class Play:
 
             play_label_ref.append(self.play_label)
 
+        # retrieve labels to configured later
+        self.heading_label = play_label_ref[0]
+        self.question_label = play_label_ref[1]
+        self.result_label = play_label_ref[2]
+
         # create flag image for the question
-        round_flag = round_flag[0]
+        self.round_flag = round_flag[0]
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
-                      f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
+                      f"Programming level 2 & 3/Flags/flag_images/{self.round_flag}")
 
         image = PhotoImage(file=photo_path)
         self.image_label = Label(self.play_frame, image=image)
@@ -260,10 +264,8 @@ class Play:
         self.new_question()
 
     def new_question(self):
-        for item in self.country_button_ref:
-            shuffle = random.randint(0,3)
-            item.config(text=self.round_country[0])
-
+        for count, item in self.country_button_ref:
+            item.config(text=self.round_country[count])
 
     def question_outcome(self, user_choice):
         country_name = self.country_button_ref[user_choice].cget('text')
