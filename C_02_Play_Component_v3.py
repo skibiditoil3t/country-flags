@@ -22,7 +22,6 @@ def get_country():
 
     round_countries = []
     round_capitals = []
-    round_flags = []
     round_flag_codes = []
 
     # loop until we have four countries with different names
@@ -30,12 +29,14 @@ def get_country():
         potential_country = random.choice(all_flags)
 
         if potential_country[0] not in round_countries:
+            # append country with flag to extract later
             round_countries.append(potential_country[0])
+            round_countries.append(potential_country[3])
+
             round_capitals.append(potential_country[1])
             round_flag_codes.append(potential_country[2])
-            round_flags.append(potential_country[3])
 
-    return round_countries, round_capitals, round_flags, round_flag_codes
+    return round_countries, round_capitals, round_flag_codes
 
 
 class StartGame:
@@ -177,8 +178,7 @@ class Play:
 
         # list for Play labels / buttons
 
-        # extract country info for round variables
-        self.round_country, self.round_capital, round_flag, round_flag_code = get_country()
+
 
         # font used for most labels / buttons
         default_font = ("Arial", 12)
@@ -203,17 +203,6 @@ class Play:
         self.question_label = play_label_ref[1]
         self.result_label = play_label_ref[2]
 
-        # create flag image for the question
-        self.round_flag = round_flag[0]
-        photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
-                      f"Programming level 2 & 3/Flags/flag_images/{self.round_flag}")
-
-        image = PhotoImage(file=photo_path)
-        self.image_label = Label(self.play_frame, image=image)
-
-        # create reference so image isn't deleted
-        self.image_label.image = image
-        self.image_label.grid(row=1)
 
         # create frame for answer buttons
         self.country_button_frame = Frame(self.play_frame)
@@ -244,32 +233,73 @@ class Play:
             [self.play_frame, "End Quiz", "#F8CECC", 9, 0, ("Arial", 16, "bold"), self.close_play, 20]
         ]
 
+        control_button_ref = []
         for item in control_button_list:
             self.control_button = Button(item[0], text=item[1], bg=item[2], font=item[5], command=item[6],
                                          width=item[7], bd=2, relief="raised")
             self.control_button.grid(row=item[3], column=item[4], padx=5, pady=2)
+            control_button_ref.append(self.control_button)
 
+        # extract buttons to configure later
+        self.next_round_button = control_button_ref[0]
+        self.hints_button = control_button_ref[1]
+        self.stats_button = control_button_ref[2]
+        self.end_game_button = control_button_ref[3]
+
+        # optional buttons added if medium is selected
         if difficulty == "medium":
-            self.additional_button_frame = Frame(self.play_frame)
-            self.additional_button_frame.grid(row=5)
+            self.capital_reroll_frame = Frame(self.play_frame)
+            self.capital_reroll_frame.grid(row=5)
 
-            self.capital_button = Button(self.additional_button_frame, text="im capital", command=self.capital,
+            self.capital_button = Button(self.capital_reroll_frame, text="im capital", command=self.capital,
                                          font=default_font)
             self.capital_button.grid(row=0, column=0)
 
-            self.reroll_button = Button(self.additional_button_frame, text="im reroll", command=self.reroll,
+            self.reroll_button = Button(self.capital_reroll_frame, text="im reroll", command=self.reroll,
                                         font=default_font)
             self.reroll_button.grid(row=0, column=1)
 
         self.new_question()
 
     def new_question(self):
-        for count, item in self.country_button_ref:
-            item.config(text=self.round_country[count])
+
+        # extract country info for round variables
+        round_country, round_capital, round_flag_code = get_country()
+
+        shuffle = random.randint(0, 3)
+        self.target_country = round_country[shuffle][0]
+        print(self.target_country)
+        self.target_flag = round_country[shuffle][1]
+        print(self.target_flag)
+
+        # scramble buttons
+        print(self.country_button_ref, "\n^^^ this is the shuffled list")
+
+        for count, item in enumerate(self.country_button_ref):
+            item.config(text=round_country[0])
+
+        # create flag image for the question
+        round_flag = round_country[1]
+        photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
+                      f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
+
+        image = PhotoImage(file=photo_path)
+        image_label = Label(self.play_frame, image=image)
+
+        # create reference so image isn't deleted
+        image_label.image = image
+        image_label.grid(row=1)
 
     def question_outcome(self, user_choice):
+
+        print(user_choice, "<< this is user choice")
         country_name = self.country_button_ref[user_choice].cget('text')
         print(f"you've picked {country_name}")
+
+        if country_name == self.target_country:
+            print("you got it correct!")
+
+
 
     def close_play(self):
         # destroy play GUI and go back to StartGame GUI
