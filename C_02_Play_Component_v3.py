@@ -21,22 +21,18 @@ def get_country():
     all_flags = get_all_flags()
 
     round_countries = []
-    round_capitals = []
-    round_flag_codes = []
 
     # loop until we have four countries with different names
+
     while len(round_countries) < 4:
         potential_country = random.choice(all_flags)
 
         if potential_country[0] not in round_countries:
-            # append country with flag to extract later
-            round_countries.append(potential_country[0])
-            round_countries.append(potential_country[3])
 
-            round_capitals.append(potential_country[1])
-            round_flag_codes.append(potential_country[2])
+            # append country with details
+            round_countries.append(potential_country)
 
-    return round_countries, round_capitals, round_flag_codes
+    return round_countries
 
 
 class StartGame:
@@ -161,6 +157,7 @@ class StartGame:
 
 
 class Play:
+    """Initial play interface"""
 
     def __init__(self, how_many, difficulty="normal"):
         # set up the difficulty
@@ -177,7 +174,8 @@ class Play:
                                root.destroy)
 
         # list for Play labels / buttons
-
+        self.question_country_list = []
+        self.question_type = "country"
 
 
         # font used for most labels / buttons
@@ -203,7 +201,6 @@ class Play:
         self.question_label = play_label_ref[1]
         self.result_label = play_label_ref[2]
 
-
         # create frame for answer buttons
         self.country_button_frame = Frame(self.play_frame)
         self.country_button_frame.grid(row=3)
@@ -227,7 +224,7 @@ class Play:
 
         # control button list (frame, text, bg, row, column, font, command, width)
         control_button_list = [
-            [self.play_frame, "Next Round", "#FFF2CC", 7, 0, ("Arial", 16, "bold"), self.new_question, 20],
+            [self.play_frame, "Next Question", "#FFF2CC", 7, 0, ("Arial", 16, "bold"), self.new_question, 20],
             [self.control_button_frame, "Hints", "#FFE6CC", 0, 0, ("Arial", 13, "bold"), None, 12],
             [self.control_button_frame, "Stats", "#F5F5F5", 0, 1, ("Arial", 13, "bold"), None, 12],
             [self.play_frame, "End Quiz", "#F8CECC", 9, 0, ("Arial", 16, "bold"), self.close_play, 20]
@@ -251,35 +248,35 @@ class Play:
             self.capital_reroll_frame = Frame(self.play_frame)
             self.capital_reroll_frame.grid(row=5)
 
-            self.capital_button = Button(self.capital_reroll_frame, text="im capital", command=self.capital,
+            self.capital_button = Button(self.capital_reroll_frame, text="Capital",
+                                         command=self.capital, width=8,
                                          font=default_font)
-            self.capital_button.grid(row=0, column=0)
+            self.capital_button.grid(row=0, column=0, padx=10)
 
-            self.reroll_button = Button(self.capital_reroll_frame, text="im reroll", command=self.reroll,
-                                        font=default_font)
-            self.reroll_button.grid(row=0, column=1)
+            self.reroll_button = Button(self.capital_reroll_frame, text="Reroll",
+                                        command=self.new_question,
+                                        font=default_font, width=8)
+            self.reroll_button.grid(row=0, column=1, padx=10)
 
+        # start new round after GUI has been set up
         self.new_question()
 
     def new_question(self):
+        """Start a new question for the user"""
 
         # extract country info for round variables
-        round_country, round_capital, round_flag_code = get_country()
+        self.question_country_list = get_country()
 
+        # testing and shuffling for the rounds
         shuffle = random.randint(0, 3)
-        self.target_country = round_country[shuffle][0]
-        print(self.target_country)
-        self.target_flag = round_country[shuffle][1]
-        print(self.target_flag)
 
-        # scramble buttons
-        print(self.country_button_ref, "\n^^^ this is the shuffled list")
-
-        for count, item in enumerate(self.country_button_ref):
-            item.config(text=round_country[0])
+        # set up targets for question and answer
+        self.target_country = self.question_country_list[shuffle][0]
+        self.target_capital = self.question_country_list[shuffle][1]
+        self.target_flag = self.question_country_list[shuffle][3]
 
         # create flag image for the question
-        round_flag = round_country[1]
+        round_flag = self.target_flag
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
                       f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
 
@@ -290,28 +287,59 @@ class Play:
         image_label.image = image
         image_label.grid(row=1)
 
+        for count, item in enumerate(self.country_button_ref):
+            item.config(text=self.question_country_list[count][0], bg="#DAE8FC",
+                        state="normal")
+
+        # configure buttons back to normal
+        self.capital_button.config(state="normal")
+        self.reroll_button.config(state="normal")
+
+
     def question_outcome(self, user_choice):
+        """
+        Checks the users answers and makes the results
+        """
 
-        print(user_choice, "<< this is user choice")
-        country_name = self.country_button_ref[user_choice].cget('text')
-        print(f"you've picked {country_name}")
+        # gets what the user picked, used to compare later
+        answer = self.country_button_ref[user_choice].cget('text')
 
-        if country_name == self.target_country:
+        # disable buttons
+        for item in self.country_button_ref:
+            item.config(state="disabled")
+
+
+        print(f"you've picked {answer}")
+
+        if answer == self.target_country:
             print("you got it correct!")
+        elif self.question_type == "capital" and self.target_capital == answer:
+            print("you got it correct too, even teh capital!")
+        else:
+            print("incorrect")
 
+        # change question type back to country
+        # so we get country names again
+        self.question_type = "country"
 
 
     def close_play(self):
+        """Closes the Play GUI"""
+
         # destroy play GUI and go back to StartGame GUI
         root.deiconify()
         self.play_box.destroy()
 
     def capital(self):
-        print("im the capital button")
+        """
+        Changes the country buttons to their capitals
+        """
+        # for testing, question_type serves to help for reroll
+        self.question_type = "capital"
+        print(self.question_type, "<< capital has been enabled")
 
-    def reroll(self):
-        for item in self.country_button_ref:
-            item.config(text=self.round_capital[0], command=self.capital)
+        for count, item in enumerate(self.country_button_ref):
+            item.config(text=self.question_country_list[count][1], bg="#E1D5E7", state="normal")
 
 
 # main routine
