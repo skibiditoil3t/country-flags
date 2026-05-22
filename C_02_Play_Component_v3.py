@@ -157,7 +157,10 @@ class StartGame:
 
 
 class Play:
-    """Initial play interface"""
+    """
+    Initial Play interface
+    (checks how many rounds)
+    """
 
     def __init__(self, how_many, difficulty="normal"):
         # set up the difficulty
@@ -181,18 +184,18 @@ class Play:
         # font used for most labels / buttons
         default_font = ("Arial", 12)
 
-        # round labels list (text | bg | row | font)
+        # round labels list (text | bg | row | font | relief | width)
         play_labels_list = [
-            ["Question: X / X", None, 0, ("Arial", 20, "bold")],
-            ["What Country Is This?", "#F5F5F5", 2, default_font],
-            ["Correct! It is [answer]..", "#D5E8D4", 6, default_font]
+            ["Question: X / X", None, 0, ("Arial", 20, "bold"), None],
+            ["What Country Is This?", "#F5F5F5", 2, default_font,  25],
+            ["Correct! It is [answer]..", "#D5E8D4", 6, default_font, None]
         ]
 
         play_label_ref = []
         for item in play_labels_list:
             self.play_label = Label(self.play_frame, text=item[0], bg=item[1],
-                                    font=item[3], bd=3)
-            self.play_label.grid(row=item[2], pady=2)
+                                    font=item[3], bd=2, width=item[4])
+            self.play_label.grid(row=item[2], pady=3, padx=5)
 
             play_label_ref.append(self.play_label)
 
@@ -233,7 +236,7 @@ class Play:
         control_button_ref = []
         for item in control_button_list:
             self.control_button = Button(item[0], text=item[1], bg=item[2], font=item[5], command=item[6],
-                                         width=item[7], bd=2, relief="raised")
+                                         width=item[7])
             self.control_button.grid(row=item[3], column=item[4], padx=5, pady=2)
             control_button_ref.append(self.control_button)
 
@@ -249,20 +252,23 @@ class Play:
             self.capital_reroll_frame.grid(row=5)
 
             self.capital_button = Button(self.capital_reroll_frame, text="Capital",
-                                         command=self.capital, width=8,
+                                         command=self.capital, width=12, height=2,
                                          font=default_font)
-            self.capital_button.grid(row=0, column=0, padx=10)
+            self.capital_button.grid(row=0, column=0, padx=10,pady=10)
 
             self.reroll_button = Button(self.capital_reroll_frame, text="Reroll",
                                         command=self.new_question,
-                                        font=default_font, width=8)
-            self.reroll_button.grid(row=0, column=1, padx=10)
+                                        font=default_font, width=12, height=2)
+            self.reroll_button.grid(row=0, column=1, padx=10,pady=10)
 
         # start new round after GUI has been set up
         self.new_question()
 
     def new_question(self):
-        """Start a new question for the user"""
+        """
+        Start a new question for the Play GUI
+        (configure Play buttons and labels)
+        """
 
         # extract country info for round variables
         self.question_country_list = get_country()
@@ -287,6 +293,8 @@ class Play:
         image_label.image = image
         image_label.grid(row=1)
 
+        self.result_label.config(text=f"{'='*20}", bg="#F0F0F0")
+
         for count, item in enumerate(self.country_button_ref):
             item.config(text=self.question_country_list[count][0], bg="#DAE8FC",
                         state="normal")
@@ -303,7 +311,6 @@ class Play:
 
         # gets what the user picked, used to compare later
         answer = self.country_button_ref[user_choice].cget('text')
-
         # disable buttons
         for item in self.country_button_ref:
             item.config(state="disabled")
@@ -312,11 +319,12 @@ class Play:
         print(f"you've picked {answer}")
 
         if answer == self.target_country:
-            print("you got it correct!")
+            self.result_label.config(text=f"Correct! The country is {answer}.", bg="#D5E8D4")
         elif self.question_type == "capital" and self.target_capital == answer:
-            print("you got it correct too, even teh capital!")
+            self.result_label.config(text=f"Correct! The capital of {self.target_country} is {answer}.",
+                                     bg="#D5E8D4")
         else:
-            print("incorrect")
+            self.result_label.config(text=f"Incorrect, the answer is {answer}.", bg="#E8D4D4")
 
         # change question type back to country
         # so we get country names again
@@ -332,10 +340,14 @@ class Play:
 
     def capital(self):
         """
-        Changes the country buttons to their capitals
+        Converts country buttons on the question
+        to their capitals
         """
+
         # for testing, question_type serves to help for reroll
         self.question_type = "capital"
+        self.question_label.config(text="What's the capital of this country?")
+
         print(self.question_type, "<< capital has been enabled")
 
         for count, item in enumerate(self.country_button_ref):
