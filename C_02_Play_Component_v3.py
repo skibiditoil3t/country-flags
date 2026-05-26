@@ -36,11 +36,11 @@ def get_country():
 
 
 class StartGame:
-    """ Initial Game interface (asks users how many rounds they
+    """ Initial Game interface (asks users how many questions they
     would like to play) """
 
     def __init__(self):
-        """ Gets number of rounds from user """
+        """ Gets number of questions from user """
 
         self.start_frame = Frame(padx=10, pady=10)
         self.start_frame.grid()
@@ -49,11 +49,11 @@ class StartGame:
         intro_string = (
             "In each round you will have to guess the flag of a country (or capital if a harder difficulty is chosen). "
             "\n\nYour goal is to correctly guess the country and win the round with your knowledge!"
-            "\n\nTo begin, please enter how many rounds you'd like to play and then choose your difficulty.")
+            "\n\nTo begin, please enter how many questions you'd like and then choose your difficulty.")
 
-        choose_string = "How many rounds do you want to play?"
+        choose_string = "How many questions do you want?"
 
-        # list of labels to be made (text | font | fg)
+        # list of labels to be made (text | font | fg | relief)
         start_labels_list = [
             ["Country Flags", ("Arial", 16, "bold"), None],
             [intro_string, ("Arial", 12), None],
@@ -71,18 +71,18 @@ class StartGame:
 
             start_label_ref.append(make_label)
 
-        self.num_rounds_entry = Entry(self.start_frame, font=("Arial", 20, "bold"),
-                                      width=15)
-        self.num_rounds_entry.grid(row=3, column=0, padx=10)
+        self.num_questions_entry = Entry(self.start_frame, font=("Arial", 20, "bold"),
+                                         width=15)
+        self.num_questions_entry.grid(row=3, column=0, padx=10)
 
         # infinite button
         self.infinite_button = Button(self.start_frame, text="Infinite", font=("Arial", 15, "bold"),
-                                      width=18, bg="#DAE8FC", height=1, command=self.inf_rounds)
+                                      width=18, bg="#DAE8FC", height=1, command=self.inf_questions)
         self.infinite_button.grid(row=4, column=0)
 
-        # initialise infinite rounds
-        self.infinite_rounds = "no"
-        self.num_rounds_entry.config(state='normal')
+        # initialise infinite questions
+        self.infinite_questions = "no"
+        self.num_questions_entry.config(state='normal')
 
         # difficulty buttons
         self.difficulty_heading = Label(self.start_frame, text="Choose your difficulty",
@@ -95,8 +95,8 @@ class StartGame:
 
         # button list (frame | text | bg | command | column)
         difficulty_button_list = [
-            [self.diff_button_frame, "Normal", "#d5e8d4", lambda: self.check_rounds("normal"), 0],
-            [self.diff_button_frame, "Medium", "#fff2cc", lambda: self.check_rounds("medium"), 1],
+            [self.diff_button_frame, "Normal", "#d5e8d4", lambda: self.check_questions("normal"), 0],
+            [self.diff_button_frame, "Medium", "#fff2cc", lambda: self.check_questions("medium"), 1],
         ]
 
         for item in difficulty_button_list:
@@ -107,29 +107,30 @@ class StartGame:
         # extract choice label to config into error message if needed
         self.choose_label = start_label_ref[2]
 
-    def check_rounds(self, difficulty="normal"):
+    def check_questions(self, difficulty="normal"):
         """
-        Checks users have entered 1 or more rounds
+        Checks users have entered 1 or more questions
         """
 
-        # Retrieve rounds and difficulty for Play class
-        rounds_wanted = self.num_rounds_entry.get()
-        if self.infinite_rounds == "yes":
-            rounds_wanted = float('inf')
+        # Retrieve questions and difficulty for Play class
+        questions_wanted = self.num_questions_entry.get()
+
+        if self.infinite_questions == "yes":
+            questions_wanted = float('inf')
 
         # Reset label and entry box (for when users come back to home screen)
         self.choose_label.config(fg="#009900", font=("Arial", 12, "bold"))
-        self.num_rounds_entry.config(bg="#FFFFFF")
+        self.num_questions_entry.config(bg="#FFFFFF")
 
         error = "Oops - Please choose a whole number more than zero."
         has_errors = "no"
 
         # checks that amount to be converted is a number above absolute zero
         try:
-            if self.infinite_rounds == "no":
-                rounds_wanted = int(rounds_wanted)
-            if rounds_wanted > 0:
-                Play(rounds_wanted, difficulty)
+            if self.infinite_questions == "no":
+                questions_wanted = int(questions_wanted)
+            if questions_wanted > 0:
+                Play(questions_wanted, difficulty)
                 root.withdraw()
             else:
                 has_errors = "yes"
@@ -138,31 +139,47 @@ class StartGame:
 
         if has_errors == "yes":
             self.choose_label.config(text=error, fg="#990000", font=("Arial", 12, "bold"))
-            self.num_rounds_entry.config(bg="#F4CCCC")
-            self.num_rounds_entry.delete(0, END)
+            self.num_questions_entry.config(bg="#F4CCCC")
+            self.num_questions_entry.delete(0, END)
 
-    def inf_rounds(self):
+    def inf_questions(self):
         """
-        Enables infinite rounds when 'infinite' button is pressed
+        Enables infinite questions when 'infinite' button is pressed
         """
-        if self.infinite_rounds == "no":
-            self.infinite_rounds = "yes"
-            self.num_rounds_entry.config(state='disabled', bg="#FFFFFF")
-            self.choose_label.config(text="You've chosen infinite rounds!", fg="#009900")
+        if self.infinite_questions == "no":
+            self.infinite_questions = "yes"
+            self.num_questions_entry.config(state='disabled', bg="#FFFFFF")
+            self.choose_label.config(text="You've chosen infinite questions!", fg="#009900")
 
         else:
-            self.infinite_rounds = "no"
-            self.num_rounds_entry.config(state='normal', bg="#FFFFFF")
-            self.choose_label.config(text="How many rounds do you want to play?", fg="#009900")
+            self.infinite_questions = "no"
+            self.num_questions_entry.config(state='normal', bg="#FFFFFF")
+            self.choose_label.config(text="How many questions do you want to answer?", fg="#009900")
 
 
 class Play:
     """
     Initial Play interface
-    (checks how many rounds)
+    (checks how many questions)
     """
 
     def __init__(self, how_many, difficulty="normal"):
+        # Integers / String Variables
+        self.target_country = ""
+        self.target_capital = ""
+
+        # set up how many questions...
+        self.questions_played = IntVar()
+        self.questions_played.set(0)
+
+        if how_many == float('inf'):
+            self.questions_wanted = "Infinite"
+        else:
+            self.questions_wanted = IntVar()
+            self.questions_wanted.set(how_many)
+
+        self.questions_won = IntVar()
+
         # set up the difficulty
         self.difficulty_playing = difficulty
 
@@ -179,7 +196,6 @@ class Play:
         # list for Play labels / buttons
         self.question_country_list = []
         self.question_type = "country"
-
 
         # font used for most labels / buttons
         default_font = ("Arial", 12)
@@ -246,46 +262,55 @@ class Play:
         self.stats_button = control_button_ref[2]
         self.end_game_button = control_button_ref[3]
 
-        # optional buttons added if medium is selected
+        # add the capital & reroll buttons when
+        # medium difficulty is selected
         if difficulty == "medium":
             self.capital_reroll_frame = Frame(self.play_frame)
             self.capital_reroll_frame.grid(row=5)
 
-            self.capital_button = Button(self.capital_reroll_frame, text="Capital",
-                                         command=self.capital, width=12, height=2,
-                                         font=default_font)
-            self.capital_button.grid(row=0, column=0, padx=10,pady=10)
+            self.capital_button = Button(self.country_button_frame, text="Capital",
+                                         command=self.capital, width=16, height=2,
+                                         font=default_font, bg="#E1D5E7")
+            self.capital_button.grid(row=5, column=0, padx=10,pady=10)
 
-            self.reroll_button = Button(self.capital_reroll_frame, text="Reroll",
+            self.reroll_button = Button(self.country_button_frame, text="Reroll (x3)",
                                         command=self.new_question,
-                                        font=default_font, width=12, height=2)
-            self.reroll_button.grid(row=0, column=1, padx=10,pady=10)
+                                        font=default_font, width=16, height=2, bg="#FFFFFF")
+            self.reroll_button.grid(row=5, column=1, padx=10,pady=10)
 
         # start new round after GUI has been set up
         self.new_question()
 
     def new_question(self):
+
         """
         Start a new question for the Play GUI
         (configure Play buttons and labels)
         """
 
+        # retrieve number of questions played and add one to the heading
+        questions_played = self.questions_played.get()
+        self.questions_played.set(questions_played)
+
+        if "Infinite" == self.questions_wanted:
+            questions_wanted = "Infinite"
+        else:
+            questions_wanted = self.questions_wanted.get()
+
         # extract country info for round variables
         self.question_country_list = get_country()
 
-        # testing and shuffling for the rounds
+        # testing and shuffling for the questions
         shuffle = random.randint(0, 3)
 
-        # set up targets for question and answer
+        # set up target country / capital
         self.target_country = self.question_country_list[shuffle][0]
         self.target_capital = self.question_country_list[shuffle][1]
-        self.target_flag = self.question_country_list[shuffle][3]
+        round_flag = self.question_country_list[shuffle][3]
 
         # create flag image for the question
-        round_flag = self.target_flag
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
                       f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
-
         image = PhotoImage(file=photo_path)
         image_label = Label(self.play_frame, image=image)
 
@@ -293,15 +318,25 @@ class Play:
         image_label.image = image
         image_label.grid(row=1)
 
-        self.result_label.config(text=f"{'='*20}", bg="#F0F0F0")
-
         for count, item in enumerate(self.country_button_ref):
             item.config(text=self.question_country_list[count][0], bg="#DAE8FC",
                         state="normal")
 
-        # configure buttons back to normal
-        self.capital_button.config(state="normal")
-        self.reroll_button.config(state="normal")
+        # Configuration area for buttons / question type
+        self.heading_label.config(text=f"Question: {questions_played} / "
+                                        f"{questions_wanted}")
+        self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
+        self.next_round_button.config(state="disabled")
+
+        if self.difficulty_playing == "medium":
+            # change q_type to 'country' then run capital
+            # so we get country names again
+            self.question_type = "capital"
+            self.capital()
+
+            self.capital_button.config(state="normal")
+            self.reroll_button.config(state="normal")
+
 
 
     def question_outcome(self, user_choice):
@@ -311,25 +346,35 @@ class Play:
 
         # gets what the user picked, used to compare later
         answer = self.country_button_ref[user_choice].cget('text')
-        # disable buttons
+
+        # disable country and control buttons when question is finished
         for item in self.country_button_ref:
             item.config(state="disabled")
+            self.next_round_button.config(state="normal")
+
+            if self.difficulty_playing == "medium":
+                self.capital_button.config(state="disabled")
+                self.reroll_button.config(state="disabled")
 
 
-        print(f"you've picked {answer}")
+        # check if user choice matches the target country
+        # OPTIMISE LATER FOR TRIALLING!!!!
+        if self.question_type == "country" and answer == self.target_country:
+            self.result_label.config(text=f"Correct! The country is {self.target_country}.", bg="#D5E8D4")
+            self.country_button_ref[user_choice].config(bg="#D5E8D4")
 
-        if answer == self.target_country:
-            self.result_label.config(text=f"Correct! The country is {answer}.", bg="#D5E8D4")
         elif self.question_type == "capital" and self.target_capital == answer:
-            self.result_label.config(text=f"Correct! The capital of {self.target_country} is {answer}.",
+            self.result_label.config(text=f"Correct! The capital of {self.target_country} is {self.target_capital}.",
                                      bg="#D5E8D4")
+            self.country_button_ref[user_choice].config(bg="#D5E8D4")
+
+        elif self.question_type == "capital" and self.target_capital != answer:
+            self.result_label.config(text=f"Incorrect, the Capital is {self.target_capital}.", bg="#E8D4D4")
+            self.country_button_ref[user_choice].config(bg="#E8D4D4")
+
         else:
-            self.result_label.config(text=f"Incorrect, the answer is {answer}.", bg="#E8D4D4")
-
-        # change question type back to country
-        # so we get country names again
-        self.question_type = "country"
-
+            self.result_label.config(text=f"Incorrect, the Country is {self.target_country}.", bg="#E8D4D4")
+            self.country_button_ref[user_choice].config(bg="#E8D4D4")
 
     def close_play(self):
         """Closes the Play GUI"""
@@ -344,16 +389,33 @@ class Play:
         to their capitals
         """
 
-        # for testing, question_type serves to help for reroll
-        self.question_type = "capital"
-        self.question_label.config(text="What's the capital of this country?")
+        if self.question_type == "capital":
+            self.question_type = "country"
+            self.question_label.config(text="What Country Is This?")
+            self.capital_button.config(text="Capital", bg="#E1D5E7")
 
-        print(self.question_type, "<< capital has been enabled")
+            for count, item in enumerate(self.country_button_ref):
+                item.config(text=self.question_country_list[count][0], bg="#DAE8FC")
+        else:
+            # for testing, question_type serves to help for reroll
+            self.question_type = "capital"
+            self.question_label.config(text="What's the capital of this country?")
+            self.capital_button.config(text="Country", bg="#DAE8FC")
 
-        for count, item in enumerate(self.country_button_ref):
-            item.config(text=self.question_country_list[count][1], bg="#E1D5E7", state="normal")
+            for count, item in enumerate(self.country_button_ref):
+                item.config(text=self.question_country_list[count][1], bg="#E1D5E7")
+
+    def reroll(self):
 
 
+        # update reroll counter
+        self.reroll_button.config(text="Reroll ()")
+
+        # penalise points for rerolling
+
+
+        # run a new question
+        self.new_question()
 # main routine
 if __name__ == "__main__":
     root = Tk()
