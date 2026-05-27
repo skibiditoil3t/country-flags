@@ -95,6 +95,7 @@ class Help:
         self.help_frame.config(bg='lightblue')
 
         # (text | row | font | justify)
+        # ADD STICKY TO THESE LABELS SO THEY GO LEFT "STICKY="W""
         hint_labels_list = [
             ["Hints", 0, ("Arial", 20, "bold"), "left"],
             ["You have used 1/3 Hints...", 1, ("Arial", 15), "left"],
