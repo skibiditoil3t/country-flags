@@ -3,6 +3,7 @@ import random
 from random import randint
 from tkinter import *
 from functools import partial  # To prevent unwanted windows
+from PIL import Image, ImageTk
 
 
 def get_all_flags():
@@ -87,35 +88,51 @@ class Help:
     def __init__(self, difficulty):
         difficulty_hint = difficulty
 
+        # set up help window and background
+        background = 'lightblue'
         self.help_box = Toplevel()
 
-        self.help_frame = Frame(self.help_box, width=300, height=400)
+        self.help_frame = Frame(self.help_box, width=500, height=200)
         self.help_frame.grid()
 
-        self.help_frame.config(bg='lightblue')
+        self.help_frame.config(bg=background)
 
-        # (text | row | font | justify)
+        round_flag = get_country()
+        round_flag = round_flag[0][3]
+
+        photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
+                      f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
+        image = Image.open(f"{photo_path}")
+        resized_image = image.resize((250, 150))
+        img = ImageTk.PhotoImage(resized_image)
+
+        image_label = Label(self.help_frame, image=img, bg=background)
+
+        # create reference so image isn't deleted
+        image_label.image = img
+        image_label.grid(row=2)
+
+        # (text | row | font | justify | sticky)
         # ADD STICKY TO THESE LABELS SO THEY GO LEFT "STICKY="W""
         hint_labels_list = [
-            ["Hints", 0, ("Arial", 20, "bold"), "left"],
-            ["You have used 1/3 Hints...", 1, ("Arial", 15), "left"],
-            ["Flag", 2, None, None],
+            ["Hints", 0, ("Arial", 20, "bold"),  "W"],
+            ["You have used 1/3 Hints...", 1, ("Arial", 15),  "W"],
             ["\nFlag code of this country:", 3, ("Arial", 15, "bold"), None],
             ["IL", 4, ("Arial", 20, "bold"), None],
             ["\nCapital of this country:", 5, ("Arial", 15, "bold"), None],
             ["Tel Aviv", 6, ("Arial", 20, "bold"), None]
         ]
 
+
         recolour_list = []
         for item in hint_labels_list:
-            hint_label = Label(self.help_frame, text=item[0], font=item[2], anchor="w",
-                               justify="right")
-            hint_label.grid(row=item[1], column=0)
+            hint_label = Label(self.help_frame, text=item[0], font=item[2])
+            hint_label.grid(row=item[1], column=0, sticky=item[3])
 
             recolour_list.append(hint_label)
 
         for item in recolour_list:
-            item.config(bg='lightblue')
+            item.config(bg=background)
 
 
 

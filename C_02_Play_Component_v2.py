@@ -1,9 +1,9 @@
 import csv
 import random
-from random import randint
+from codecs import replace_errors
 from tkinter import *
 from functools import partial  # To prevent unwanted windows
-
+from PIL import Image, ImageTk
 
 def get_all_flags():
     # Retrieve colours from csv file and put them in a list
@@ -165,9 +165,11 @@ class Play:
 
     def __init__(self, how_many, difficulty="normal"):
         # Integers / String Variables
+        self.points_penalised = 0
+        self.reroll_counter = 0
         self.target_country = ""
         self.target_capital = ""
-        self.reroll_counter = 3
+
 
         # set up how many questions...
         self.questions_played = IntVar()
@@ -274,7 +276,7 @@ class Play:
                                          font=default_font, bg="#E1D5E7")
             self.capital_button.grid(row=5, column=0, padx=10,pady=10)
 
-            self.reroll_button = Button(self.country_button_frame, text="Reroll (x3)",
+            self.reroll_button = Button(self.country_button_frame, text="Reroll",
                                         command=self.reroll,
                                         font=default_font, width=16, height=2, bg="#FFFFFF")
             self.reroll_button.grid(row=5, column=1, padx=10,pady=10)
@@ -313,11 +315,14 @@ class Play:
         # create flag image for the question
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
                       f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
-        image = PhotoImage(file=photo_path)
-        image_label = Label(self.play_frame, image=image)
+        image = Image.open(f"{photo_path}")
+        resized_image = image.resize((250, 150))
+        img = ImageTk.PhotoImage(resized_image)
+
+        image_label = Label(self.play_frame, image=img)
 
         # create reference so image isn't deleted
-        image_label.image = image
+        image_label.image = img
         image_label.grid(row=1)
 
         for count, item in enumerate(self.country_button_ref):
@@ -358,9 +363,6 @@ class Play:
             if self.difficulty_playing == "medium":
                 self.capital_button.config(state="disabled")
 
-
-
-
         # check if user choice matches the target country
         # OPTIMISE LATER FOR TRIALLING!!!!
         if self.question_type == "country" and answer == self.target_country:
@@ -381,10 +383,20 @@ class Play:
             self.country_button_ref[user_choice].config(bg="#E8D4D4")
 
         # end the game if rounds are finished
-        self.questions_played += 1
+        questions_played = self.questions_played.get()
+        questions_played += 1
+        self.questions_played.set(questions_played)
+        print(questions_played)
 
-        if self.questions_played == self.questions_wanted:
-            self.next_round_button.config(state='disabled')
+        if self.questions_wanted == "Infinite":
+            pass
+        else:
+            questions_wanted = self.questions_wanted.get()
+
+            if questions_played == questions_wanted:
+                self.heading_label.config(text=f"Question: {questions_played} / {questions_wanted}")
+                self.next_round_button.config(state='disabled', text="Quiz finished!")
+
 
 
     def close_play(self):
@@ -421,15 +433,18 @@ class Play:
         Rerolls the country question for the user
         """
         # update the reroll button and start a new question
-        self.reroll_counter = self.reroll_counter - 1
-        self.reroll_button.config(text=f"Reroll (x{self.reroll_counter})")
+        self.reroll_counter += 1
+        print(self.reroll_counter, "<< reroll times")
+        self.points_penalised -= 1
+        print(self.points_penalised, "<< points penalised")
 
         self.new_question()
 
+        self.result_label.config(text=f"You have rerolled x{self.reroll_counter} times.."
+                                      f"\nPoints penalised: {self.points_penalised}.")
 
-        # check if reroll counter isn't 0
-        if self.reroll_counter == 0:
-            self.reroll_button.config(state='disabled')
+
+
 
 
         # penalise points for rerolling
