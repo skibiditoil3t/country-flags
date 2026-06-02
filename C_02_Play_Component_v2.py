@@ -163,17 +163,21 @@ class Play:
     (checks how many questions)
     """
 
+
     def __init__(self, how_many, difficulty="normal"):
         # Integers / String Variables
         self.points_penalised = 0
         self.reroll_counter = 0
+        self.hints_counter = 0
         self.target_country = ""
         self.target_capital = ""
+        self.round_flag = ""
+        self.country_code = ""
 
 
         # set up how many questions...
-        self.questions_played = IntVar()
-        self.questions_played.set(0)
+        self.questions_answered = IntVar()
+        self.questions_answered.set(0)
 
         if how_many == float('inf'):
             self.questions_wanted = "Infinite"
@@ -247,9 +251,9 @@ class Play:
         # control button list (frame, text, bg, row, column, font, command, width)
         control_button_list = [
             [self.play_frame, "Next Question", "#FFF2CC", 7, 0, ("Arial", 16, "bold"), self.new_question, 20],
-            [self.control_button_frame, "Hints", "#FFE6CC", 0, 0, ("Arial", 13, "bold"), None, 12],
+            [self.control_button_frame, "Help", "#ADD8E6", 0, 0, ("Arial", 13, "bold"), self.to_hints, 12],
             [self.control_button_frame, "Stats", "#F5F5F5", 0, 1, ("Arial", 13, "bold"), None, 12],
-            [self.play_frame, "End Quiz", "#F8CECC", 9, 0, ("Arial", 16, "bold"), self.close_play, 20]
+            [self.play_frame, "End Quiz", "#F8CECC", 9, 0, ("Arial", 16, "bold"), self.close_quiz, 20]
         ]
 
         control_button_ref = []
@@ -292,8 +296,8 @@ class Play:
         """
 
         # retrieve number of questions played and add one to the heading
-        questions_played = self.questions_played.get()
-        self.questions_played.set(questions_played)
+        questions_played = self.questions_answered.get()
+        self.questions_answered.set(questions_played)
 
         # check for infinite rounds
         if "Infinite" == self.questions_wanted:
@@ -310,11 +314,12 @@ class Play:
         # set up target country / capital
         self.target_country = self.question_country_list[shuffle][0]
         self.target_capital = self.question_country_list[shuffle][1]
-        round_flag = self.question_country_list[shuffle][3]
+        self.country_code = self.question_country_list[shuffle][2]
+        self.round_flag = self.question_country_list[shuffle][3]
 
         # create flag image for the question
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
-                      f"Programming level 2 & 3/Flags/flag_images/{round_flag}")
+                      f"Programming level 2 & 3/Flags/flag_images/{self.round_flag}")
         image = Image.open(f"{photo_path}")
         resized_image = image.resize((250, 150))
         img = ImageTk.PhotoImage(resized_image)
@@ -330,6 +335,11 @@ class Play:
                         state="normal")
 
         # Configuration area for buttons / question type
+        if questions_played >= 1:
+            self.stats_button.config(state="normal")
+        else:
+            self.stats_button.config(state="disabled")
+
         self.heading_label.config(text=f"Question: {questions_played} / "
                                         f"{questions_wanted}")
         self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
@@ -359,7 +369,6 @@ class Play:
             item.config(state="disabled")
             self.next_round_button.config(state="normal")
 
-
             if self.difficulty_playing == "medium":
                 self.capital_button.config(state="disabled")
 
@@ -383,9 +392,9 @@ class Play:
             self.country_button_ref[user_choice].config(bg="#E8D4D4")
 
         # end the game if rounds are finished
-        questions_played = self.questions_played.get()
+        questions_played = self.questions_answered.get()
         questions_played += 1
-        self.questions_played.set(questions_played)
+        self.questions_answered.set(questions_played)
         print(questions_played)
 
         if self.questions_wanted == "Infinite":
@@ -399,7 +408,7 @@ class Play:
 
 
 
-    def close_play(self):
+    def close_quiz(self):
         """Closes the Play GUI"""
 
         # destroy play GUI and go back to StartGame GUI
@@ -450,6 +459,88 @@ class Play:
         # penalise points for rerolling
         # PLACEHOLDER
 
+    def to_hints(self):
+        # Displays hints and retrieves difficulty
+        self.hints_counter += 1
+        questions_answered = self.questions_answered.get()
+
+        Help(self, self.target_capital, self.round_flag,
+             self.country_code, self.difficulty_playing, self.hints_counter, questions_answered)
+
+
+class Help:
+    """
+    Initial Help GUI
+    (Shows user the country and capital if needed)
+    """
+
+    def __init__(self, partner, capital, image, code, difficulty, hint_count, questions_answered):
+
+        self.questions_answered = questions_answered
+
+        # set up help window and background
+        background = '#ADD8E6'
+        self.help_box = Toplevel()
+
+        # if 'x' at window is pressed, end all processes
+        self.help_box.protocol('WM_DELETE_WINDOW',
+                               partial(self.close_hints, partner))
+
+        # disable buttons
+        partner.hints_button.config(state="disabled")
+        partner.end_game_button.config(state="disabled")
+        partner.stats_button.config(state="disabled")
+
+        self.help_frame = Frame(self.help_box, width=500, height=200)
+        self.help_frame.grid()
+
+        self.help_frame.config(bg=background)
+
+        photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
+                      f"Programming level 2 & 3/Flags/flag_images/{image}")
+        image = Image.open(f"{photo_path}")
+        resized_image = image.resize((250, 150))
+        img = ImageTk.PhotoImage(resized_image)
+
+        image_label = Label(self.help_frame, image=img, bg=background)
+
+        # create reference so image isn't deleted
+        image_label.image = img
+        image_label.grid(row=2)
+
+        # (text | row | font | sticky)
+        # ADD STICKY TO THESE LABELS SO THEY GO LEFT "STICKY="W""
+        hint_labels_list = [
+            ["Hints", 0, ("Arial", 20, "bold"), "W"],
+            [f"You have used {hint_count} Hint/s...", 1, ("Arial", 15), "W"],
+            [f"\nFlag code of this country:\n{code}", 3, ("Arial", 15, "bold"), None],
+            [f"\nCapital of this country:\n{capital}", 5, ("Arial", 15, "bold"), None],
+        ]
+
+        if difficulty == "medium":
+            hint_labels_list.pop(3)
+
+        recolour_list = []
+
+        for item in hint_labels_list:
+            hint_label = Label(self.help_frame, text=item[0], font=item[2])
+            hint_label.grid(row=item[1], column=0, sticky=item[3])
+            recolour_list.append(hint_label)
+
+        for item in recolour_list:
+            item.config(bg=background)
+
+    def close_hints(self, partner):
+        """Closes the Hint GUI"""
+        # put hint button state to normal
+        partner.hints_button.config(state="normal")
+        partner.end_game_button.config(state="normal")
+
+        if self.questions_answered > 1:
+            partner.stats_button.config(state="normal")
+
+        # destroy play GUI and go back to StartGame GUI
+        self.help_box.destroy()
 
 
 # main routine
