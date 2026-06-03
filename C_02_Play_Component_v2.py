@@ -1,6 +1,5 @@
 import csv
 import random
-from codecs import replace_errors
 from tkinter import *
 from functools import partial  # To prevent unwanted windows
 from PIL import Image, ImageTk
@@ -169,6 +168,7 @@ class Play:
         self.points_penalised = 0
         self.reroll_counter = 0
         self.hints_counter = 0
+        self.answer_streak = 0
         self.target_country = ""
         self.target_capital = ""
         self.round_flag = ""
@@ -335,19 +335,20 @@ class Play:
                         state="normal")
 
         # Configuration area for buttons / question type
-        if questions_played >= 1:
-            self.stats_button.config(state="normal")
-        else:
-            self.stats_button.config(state="disabled")
-
         self.heading_label.config(text=f"Question: {questions_played} / "
                                         f"{questions_wanted}")
         self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
         self.next_round_button.config(state="disabled")
-
+        
+        # enable stats when user has completed a round
+        if questions_played >= 1:
+            self.stats_button.config(state="normal")
+        else:
+            self.stats_button.config(state="disabled")
+        
+        # change q_type to capital to get country names for question
         if self.difficulty_playing == "medium":
-            # change q_type to 'country' then run capital
-            # so we get country names again
+            
             self.question_type = "capital"
             self.capital()
 
@@ -364,7 +365,7 @@ class Play:
         answer = self.country_button_ref[user_choice].cget('text')
 
         # disable main question buttons / other control buttons
-        # and enable next rounds for user to continue
+        # enable next rounds for user to continue
         for item in self.country_button_ref:
             item.config(state="disabled")
             self.next_round_button.config(state="normal")
@@ -373,25 +374,26 @@ class Play:
                 self.capital_button.config(state="disabled")
 
         # check if user choice matches the target country
-        # OPTIMISE LATER FOR TRIALLING!!!!
-        if self.question_type == "country" and answer == self.target_country:
-            self.result_label.config(text=f"Correct! The country is {self.target_country}.", bg="#D5E8D4")
+        if answer == self.target_country:
+            self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_country}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
-
-        elif self.question_type == "capital" and self.target_capital == answer:
-            self.result_label.config(text=f"Correct! The capital of {self.target_country} is {self.target_capital}.",
-                                     bg="#D5E8D4")
+            self.answer_streak += 1
+        elif answer == self.target_capital:
+            self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_capital}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
-
-        elif self.question_type == "capital" and self.target_capital != answer:
-            self.result_label.config(text=f"Incorrect, the Capital is {self.target_capital}.", bg="#E8D4D4")
+            self.answer_streak += 1
+        elif answer != self.target_capital:
+            self.result_label.config(text=f"Incorrect, the {self.question_type} is {self.target_capital}.", bg="#E8D4D4")
             self.country_button_ref[user_choice].config(bg="#E8D4D4")
-
+            self.answer_streak = 0
         else:
-            self.result_label.config(text=f"Incorrect, the Country is {self.target_country}.", bg="#E8D4D4")
+            self.result_label.config(text=f"Incorrect, the {self.question_type} is {self.target_country}.", bg="#E8D4D4")
             self.country_button_ref[user_choice].config(bg="#E8D4D4")
-
-        # end the game if rounds are finished
+            self.answer_streak = 0
+            
+        
+        # checks if questions wanted have all been played,
+        # continues if it's infinite rounds
         questions_played = self.questions_answered.get()
         questions_played += 1
         self.questions_answered.set(questions_played)
