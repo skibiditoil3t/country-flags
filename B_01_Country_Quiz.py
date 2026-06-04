@@ -174,6 +174,10 @@ class Play:
         self.round_flag = ""
         self.country_code = ""
 
+        # Lists for stats
+        self.all_stats_list = []
+        self.all_stats_list = []
+
         # set up how many questions...
         self.questions_answered = IntVar()
         self.questions_answered.set(0)
@@ -263,7 +267,7 @@ class Play:
             control_button_ref.append(self.control_button)
 
         # extract buttons to configure later
-        self.next_round_button = control_button_ref[0]
+        self.next_question = control_button_ref[0]
         self.hints_button = control_button_ref[1]
         self.stats_button = control_button_ref[2]
         self.end_game_button = control_button_ref[3]
@@ -337,7 +341,7 @@ class Play:
         self.heading_label.config(text=f"Question: {questions_played} / "
                                        f"{questions_wanted}")
         self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
-        self.next_round_button.config(state="disabled")
+        self.next_question.config(state="disabled")
 
         # enable stats when user has completed a round
         if questions_played >= 1:
@@ -365,12 +369,13 @@ class Play:
         # enable next rounds for user to continue
         for item in self.country_button_ref:
             item.config(state="disabled")
-            self.next_round_button.config(state="normal")
+            self.next_question.config(state="normal")
 
             if self.difficulty_playing == "medium":
                 self.capital_button.config(state="disabled")
 
         # check if user choice matches the target country
+        # and update the streak
         if answer == self.target_country:
             self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_country}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
@@ -391,20 +396,23 @@ class Play:
             self.country_button_ref[user_choice].config(bg="#E8D4D4")
             self.country_streak = 0
 
-        # checks if questions wanted have all been played,
-        # continues if it's infinite rounds
-        questions_played = self.questions_answered.get()
-        questions_played += 1
-        self.questions_answered.set(questions_played)
+        # updates questions answered and
+        questions_answered = self.questions_answered.get()
+        questions_answered += 1
+        self.questions_answered.set(questions_answered)
 
         if self.questions_wanted == "Infinite":
             pass
         else:
             questions_wanted = self.questions_wanted.get()
 
-            if questions_played == questions_wanted:
-                self.heading_label.config(text=f"Question: {questions_played} / {questions_wanted}")
-                self.next_round_button.config(state='disabled', text="Quiz finished!")
+            if questions_answered == questions_wanted:
+                self.heading_label.config(text=f"Question: {questions_answered} / {questions_wanted}")
+                self.next_question.config(state='disabled', text="Quiz finished!")
+
+        # update country details with new info
+        self.all_stats_list = [self.target_country, self.target_capital, self.difficulty_playing,
+                               self.hints_counter, self.questions_answered, self.country_streak, self.capital_streak]
 
     def close_quiz(self):
         """Closes the Play GUI"""
@@ -431,6 +439,7 @@ class Play:
             self.question_type = "capital"
             self.question_label.config(text="What's the capital of this country?")
             self.capital_button.config(text="Country", bg="#DAE8FC")
+            self.next_question.config(text="Answer this first!", state="disabled")
 
             for count, item in enumerate(self.country_button_ref):
                 item.config(text=self.question_country_list[count][1], bg="#E1D5E7")
@@ -463,25 +472,21 @@ class Play:
 
     def to_stats(self):
         # Displays Stats
+
         # Retrieves all results and compiles into one big stats list
-        # all_stats_list = []
+        # Country | Capital | Difficulty | Hints | No. of questions | Country Streak | Capital Streak
+        all_stats_list = self.all_stats_list
 
-        difficulty = self.difficulty_playing
-
-        Stats(self, "New Zealand", "Wellington",
-              self.difficulty_playing, 3, 5, 3, 0)
+        Stats(self, all_stats_list)
 
 
 class Stats:
     """
-    Initial Stats  GUI
+    Initial Stats GUI
     (Shows user the country and capital if needed)
     """
 
-    def __init__(self, partner, country, capital, difficulty,
-                 hint_count, questions_answered, correct_country, correct_capital):
-
-        self.questions_played = questions_answered
+    def __init__(self, partner, all_stats):
 
         # set up help window and background
         background = '#FFFFFF'
@@ -501,33 +506,64 @@ class Stats:
 
         self.stats_frame.config(bg=background)
 
-        # (text | row | font | sticky)
-        # ADD STICKY TO THESE LABELS SO THEY GO LEFT "STICKY="W""
+        # retrieve necessary stats for the strings and labels
+        target_country = all_stats[0]
+        target_capital = all_stats[1]
+        difficulty_playing = all_stats[2]
+        hint_count = all_stats[3]
+        questions_answered = all_stats[4]
+        country_streak = all_stats[5]
+        capital_streak = all_stats[6]
+
+        # Fonts for strings
+        heading_font = ("Arial", 25, "bold")
+        body_font = ("Arial", 15)
+        round_font = ("Arial", 20, "bold")
+
+        # Strings for the stats labels...
+
+        question_stats_string = (f"\nDifficulty: {difficulty_playing}"
+                              f"\nQuestions Answered: {questions_answered}"
+                              f"\nHints Used: {hint_count}")
+        country_streak_string = f"Countries: {country_streak} / {questions_answered}\n"
+        capital_streak_string = ("Capitals: N/A\nPlay on higher difficulties to have a go at\n"
+                                 "guessing the capitals!")
+
+        # update the stats to see if there's a streak
+        if country_streak > 2:
+            country_streak_string = f"You're on a guessing roll! {country_streak} in a row.."
+        elif capital_streak > 2:
+            capital_streak_string = f"You're on a guessing roll here too! {capital_streak} in a row.."
+
+        # check if difficulty is medium, update capitals to be enabled..
+        if difficulty_playing == "medium":
+            capital_streak_string =f"Capitals: {capital_streak} / {questions_answered}"
+
+        # stats labels list (text | row | font | sticky)
         stats_labels_list = [
-            ["Stats", 0, ("Arial", 25, "bold"), "W"],
-            [f"Hints Used: {hint_count}", 1, ("Arial", 15), "W"],
-            [f"Questioned Answered: {questions_answered}", 2, ("Arial", 15), "W"],
-            [f"Difficulty: "+difficulty, 3, ("Arial", 15), "W"],
-            [f"\nThis round's country was..", 4, ("Arial", 20, "bold"), "W"],
-            [f"{country}", 5, ("Arial", 20), "nsew"],
-            [f"This Capital of this country is..", 6, ("Arial", 20, "bold"), "W"],
-            [f"{capital}", 7, ("Arial", 20), "nsew"],
-            [f"\nCountries: {correct_country} / {questions_answered}\n", 8, ("Arial", 15), "W"],
-            [f"Capitals: N/A\nPlay on higher difficulties to have a go at\n"
-             f"guessing the capitals!", 9, ("Arial", 15), "W"]
+            ["Stats", heading_font, "W"],
+            [question_stats_string, body_font, "W"],
+            [f"\nThis round's country was..",  round_font, "W"],
+            [target_country, round_font, "nsew"],
+            [f"This Capital of this country is..",  round_font, "W"],
+            [target_capital, round_font, "nsew"],
+            [country_streak_string, body_font, "W"],
+            [capital_streak_string, body_font, "W"]
 
         ]
 
         recolour_list = []
 
-        for item in stats_labels_list:
-            hint_label = Label(self.stats_frame, text=item[0], font=item[2], justify="left")
-            hint_label.grid(row=item[1], column=0, sticky=item[3], padx=10)
+        for count, item in enumerate(stats_labels_list):
+            hint_label = Label(self.stats_frame, text=item[0], font=item[1], justify="left")
+            hint_label.grid(row=count, column=0, sticky=item[2], padx=10)
             recolour_list.append(hint_label)
+
 
         for item in recolour_list:
             item.config(bg=background, fg="#333333")
 
+        # dismiss button
         self.dismiss_button = Button(self.stats_frame,
                                      font=("Arial", 16, "bold"),
                                      text="Close", bg="#333333",
@@ -535,10 +571,10 @@ class Stats:
                                      command=partial(self.close_stats, partner))
         self.dismiss_button.grid(row=10, padx=10, pady=20)
 
-        if difficulty == "medium":
-            capital_label = recolour_list[9]
-            print(capital_label, "<< this should be capital label")
-            capital_label.config(text=f"Capitals: {correct_capital} / {questions_answered}")
+
+
+
+
 
 
     def close_stats(self, partner):
@@ -556,7 +592,8 @@ class Stats:
 class Help:
     """
     Initial Help GUI
-    (Shows user the country and capital if needed)
+    (Gives users a hint to the country by providing
+    flag codes. Capital is given on lower difficulties )
     """
 
     def __init__(self, partner, capital, image, code, difficulty, hint_count, questions_answered):
