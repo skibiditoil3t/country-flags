@@ -169,6 +169,8 @@ class Play:
         self.hints_counter = 0
         self.country_streak = 0
         self.capital_streak = 0
+        self.correct_country = 0
+        self.correct_capital = 0
         self.target_country = ""
         self.target_capital = ""
         self.country_flag = ""
@@ -177,6 +179,7 @@ class Play:
         # Lists for stats
         self.all_stats_list = []
         self.country_details = []
+        self.additional_stats = []
 
         # set up how many questions...
         self.questions_answered = IntVar()
@@ -378,14 +381,17 @@ class Play:
                 self.capital_button.config(state="disabled")
 
         # Compare the user choice (answer) with target country or capital for the question
+        # Update correct guesses for either country / capital and update streak..
         if answer == self.target_country:
             self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_country}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
             self.country_streak += 1
+            self.correct_country += 1
         elif answer == self.target_capital:
             self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_capital}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
             self.capital_streak += 1
+            self.correct_capital += 1
 
         elif self.question_type == "capital" and answer != self.target_capital:
             self.result_label.config(text=f"Incorrect, the {self.question_type} is {self.target_capital}.",
@@ -404,7 +410,7 @@ class Play:
         self.questions_answered.set(questions_answered)
 
         if self.questions_wanted == "Infinite":
-            pass
+            questions_wanted = "Infinite"
         else:
             questions_wanted = self.questions_wanted.get()
 
@@ -412,10 +418,29 @@ class Play:
                 self.heading_label.config(text=f"Question: {questions_answered} / {questions_wanted}")
                 self.next_question.config(state='disabled', text="Quiz finished!")
 
-        # update country details with new info
-        # Country | Capital | Difficulty | Hints | No. of questions | Country Streak | Capital Streak
+        # create string for stats
+        country_numbers_string = f"Country: {self.correct_country} / {questions_wanted}"
+        capital_numbers_string = f"Capital: N/A (Play on higher difficulties to answer this!)\n"
+
+        # check if difficulty is medium, update capitals to be enabled..
+        if self.difficulty_playing == "medium":
+            capital_numbers_string = f"Capitals: {self.correct_capital} / {questions_wanted}\n"
+
+        # update strings when there's a streak
+        if self.country_streak >= 2:
+            country_numbers_string = country_numbers_string + f"\n{self.country_streak} correct guesses in a row!\n"
+
+        if self.capital_streak >= 2:
+            capital_numbers_string = capital_numbers_string + f"{self.capital_streak} correct guesses in a row!"
+
+        # additional stats which is used to be used later
+        self.additional_stats = [self.hints_counter, self.reroll_counter,
+                                 questions_answered, country_numbers_string, capital_numbers_string]
+
+        # Get all stats into one big list
+        # Country | Capital | Difficulty | Hints | Rerolls | No. of questions | Country Streak | Capital Streak
         self.all_stats_list = [self.country_details, self.difficulty_playing,
-                               self.hints_counter, questions_answered, self.country_streak, self.capital_streak]
+                               self.additional_stats]
 
     def close_quiz(self):
         """Closes the Play GUI"""
@@ -442,7 +467,7 @@ class Play:
             self.question_type = "capital"
             self.question_label.config(text="What's the capital of this country?")
             self.capital_button.config(text="Country", bg="#DAE8FC")
-            self.next_question.config(text="Answer this first!", state="disabled")
+            self.next_question.config(state="disabled")
 
             for count, item in enumerate(self.country_button_ref):
                 item.config(text=self.question_country_list[count][1], bg="#E1D5E7")
@@ -451,16 +476,13 @@ class Play:
         """
         Rerolls the country question for the user
         """
-        # update the reroll button and start a new question
+        # update the reroll counter  and start a new question
         self.reroll_counter += 1
-        print(self.reroll_counter, "<< reroll times")
         self.points_penalised -= 1
-        print(self.points_penalised, "<< points penalised")
 
         self.new_question()
 
-        self.result_label.config(text=f"You have rerolled x{self.reroll_counter} times.."
-                                      f"\nPoints penalised: {self.points_penalised}.")
+        self.result_label.config(text=f"You've rerolled! {self.reroll_counter} points deducted..")
 
         # penalise points for rerolling
         # PLACEHOLDER
@@ -502,58 +524,49 @@ class Stats:
         partner.end_game_button.config(state="disabled")
         partner.stats_button.config(state="disabled")
 
-        self.stats_frame = Frame(self.stats_box, width=500, height=200)
+        self.stats_frame = Frame(self.stats_box, width=500, height=400)
         self.stats_frame.grid()
 
         self.stats_frame.config(bg=background)
 
         # retrieve necessary stats for the strings and labels
-        target_country = all_stats[0]
-        target_capital = all_stats[1]
-        difficulty_playing = all_stats[4]
-        hint_count = all_stats[5]
-        questions_answered = all_stats[6]
-        country_streak = all_stats[7]
-        capital_streak = all_stats[8]
+        target_country = all_stats[0][0]
+        target_capital = all_stats[0][1]
+        difficulty_playing = all_stats[1]
+        hint_count = all_stats[2][0]
+        reroll_count = all_stats[2][1]
+        questions_answered = all_stats[2][2]
+        country_streak = all_stats[2][3]
+        capital_streak = all_stats[2][4]
 
         # Fonts for strings
-        heading_font = ("Arial", 25, "bold")
-        answer_font = ("Arial", 25)
-        body_font = ("Arial", 15)
+        heading_font = ("Arial", 20, "bold")
+        question_heading_font = ("Arial", 15, "bold")
+        answer_font = ("Arial", 17)
+        body_font = ("Arial", 14)
         round_font = ("Arial", 20, "bold")
 
         # Strings for the stats labels...
-
-        question_stats_string = (f"\nDifficulty: {difficulty_playing}"
-                              f"\nQuestions Answered: {questions_answered}"
+        question_stats_string = (f"Difficulty: {difficulty_playing}"
+                                 f"\nQuestions Answered: {questions_answered}")
+        additional_stats_string = (f"Rerolls: {reroll_count}"
                               f"\nHints Used: {hint_count}")
-        country_streak_string = f"Countries: {country_streak}\n"
-        capital_streak_string = ("Capitals: N/A\nPlay on higher difficulties to have a go at\n"
-                                 "guessing the capitals!")
 
-        # check if difficulty is medium, update capitals to be enabled..
-        if difficulty_playing == "medium":
-            capital_streak_string = f"Capitals: {capital_streak}\n"
 
-        # update strings when there's a streak
-        if country_streak > 2:
-            country_streak_string = f"You're on a guessing roll! {country_streak} in a row.."
-
-        if capital_streak > 2:
-            capital_streak_string = f"You're on a guessing roll here too! {capital_streak} in a row.."
-
+        # if rerolls > 1, show user how many points they've been penalised...
 
         # stats labels list (text | row | font | sticky)
         stats_labels_list = [
             ["Statistics", heading_font, "W"],
             [question_stats_string, body_font, "W"],
-            [f"\nThis question's country was..",  round_font, "W"],
+            [f"\nQuestion {questions_answered-1}'s country was..",  round_font, "W"],
             [target_country, answer_font, "nsew"],
-            [f"This Capital of this country is..",  round_font, "W"],
-            [target_capital, answer_font, "nsew"],
-            [country_streak_string, body_font, "W"],
-            [capital_streak_string, body_font, "W"]
-
+            ["The Capital of this country is..",  round_font, "W"],
+            [target_capital+"\n", answer_font, "nsew"],
+            [country_streak, body_font, "W"],
+            [capital_streak, body_font, "W"],
+            ["Additional Stats:", question_heading_font, "W"],
+            [additional_stats_string, body_font, "W"]
         ]
 
         recolour_list = []
