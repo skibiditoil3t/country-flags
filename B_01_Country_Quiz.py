@@ -324,7 +324,8 @@ class Play:
         self.country_flag = self.question_country_list[shuffle][3]
 
         # Gather this question's country details for help and for stats
-        self.country_details = [self.target_country, self.target_capital, self.country_code, self.country_flag]
+        self.country_details = [self.target_country, self.target_capital, self.country_code, self.country_flag,
+                                questions_answered]
 
         # create flag image for the question
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
@@ -377,9 +378,6 @@ class Play:
             item.config(state="disabled")
             self.next_question.config(state="normal", text="Next Question")
 
-            if self.difficulty_playing == "medium":
-                self.capital_button.config(state="disabled")
-
         # Compare the user choice (answer) with target country or capital for the question
         # Update correct guesses for either country / capital and update streak..
         if answer == self.target_country:
@@ -409,8 +407,10 @@ class Play:
         questions_answered += 1
         self.questions_answered.set(questions_answered)
 
+        # Check if questions answered should infinitely continue
+        # Or if they match the questions wanted..
         if self.questions_wanted == "Infinite":
-            questions_wanted = "Infinite"
+            questions_wanted = f"{questions_answered}"
         else:
             questions_wanted = self.questions_wanted.get()
 
@@ -418,42 +418,37 @@ class Play:
                 self.heading_label.config(text=f"Question: {questions_answered} / {questions_wanted}")
                 self.next_question.config(state='disabled', text="Quiz finished!")
 
-        # create string for stats
-        country_numbers_string = f"Country: {self.correct_country} / {questions_wanted}"
-        capital_numbers_string = f"Capital: N/A (Play on higher difficulties to answer this!)\n"
+        # create string to show how much correct guesses user has made for country / capital
+        correct_country_string = f"Country: {self.correct_country} / {questions_wanted}"
+        correct_capital_string = f"Capital: N/A (Play on higher difficulties to answer this!)\n"
 
-        # check if difficulty is medium, update capitals to be enabled..
         if self.difficulty_playing == "medium":
-            capital_numbers_string = f"Capitals: {self.correct_capital} / {questions_wanted}\n"
+            if self.question_type != "capital":
+                self.capital_button.config(state="normal")
+            correct_capital_string = f"Capital: {self.correct_capital} / {questions_wanted}\n"
 
         # update strings when there's a streak
         if self.country_streak >= 2:
-            country_numbers_string = country_numbers_string + f"\n{self.country_streak} correct guesses in a row!\n"
+            correct_country_string = correct_country_string + f"\n{self.country_streak} correct guesses in a row!\n"
 
         if self.capital_streak >= 2:
-            capital_numbers_string = capital_numbers_string + f"{self.capital_streak} correct guesses in a row!"
+            correct_capital_string = correct_capital_string + f"{self.capital_streak} correct guesses in a row!"
 
         # additional stats which is used to be used later
-        self.additional_stats = [self.hints_counter, self.reroll_counter,
-                                 questions_answered, country_numbers_string, capital_numbers_string]
+        self.additional_stats = [self.hints_counter, self.reroll_counter, correct_country_string, correct_capital_string]
 
         # Get all stats into one big list
-        # Country | Capital | Difficulty | Hints | Rerolls | No. of questions | Country Streak | Capital Streak
+        # Country Details | Difficulty | Additional Stats
         self.all_stats_list = [self.country_details, self.difficulty_playing,
                                self.additional_stats]
 
     def close_quiz(self):
-        """Closes the Play GUI"""
-
-        # destroy play GUI and go back to StartGame GUI
+        # destroy play GUI and go back to StartQuiz GUI
         root.deiconify()
         self.play_box.destroy()
 
     def capital(self):
-        """
-        Converts country buttons on the question
-        to their capitals
-        """
+        # Changes the question from answering target country to target capital
 
         if self.question_type == "capital":
             self.question_type = "country"
@@ -463,26 +458,29 @@ class Play:
             for count, item in enumerate(self.country_button_ref):
                 item.config(text=self.question_country_list[count][0], bg="#DAE8FC")
         else:
-            # for testing, question_type serves to help for reroll
             self.question_type = "capital"
             self.question_label.config(text="What's the capital of this country?")
-            self.capital_button.config(text="Country", bg="#DAE8FC")
+            self.capital_button.config(text="Country", bg="#DAE8FC", state="disabled")
             self.next_question.config(state="disabled")
 
+            # Add 1 to the number of questions answered
+            questions_answered = self.questions_answered.get()
+            questions_answered += 1
+            self.questions_answered.set(questions_answered)
+
+
             for count, item in enumerate(self.country_button_ref):
-                item.config(text=self.question_country_list[count][1], bg="#E1D5E7")
+                item.config(text=self.question_country_list[count][1], bg="#E1D5E7", state="normal")
 
     def reroll(self):
-        """
-        Rerolls the country question for the user
-        """
-        # update the reroll counter  and start a new question
+
+        # Rerolls the target country and capital for the user
         self.reroll_counter += 1
         self.points_penalised -= 1
 
         self.new_question()
 
-        self.result_label.config(text=f"You've rerolled! {self.reroll_counter} points deducted..")
+        self.result_label.config(text=f"You've rerolled a total of {self.reroll_counter} time/s")
 
         # penalise points for rerolling
         # PLACEHOLDER
@@ -490,16 +488,12 @@ class Play:
     def to_hints(self):
         # Displays Help GUI and retrieves difficulty
         self.hints_counter += 1
-        questions_answered = self.questions_answered.get()
 
-        # Country | Capital | Difficulty | Hints | No. of questions | Country Streak | Capital Streak
-
-        Help(self, self.target_capital, self.country_flag,
-             self.country_code, self.difficulty_playing, self.hints_counter, questions_answered)
+        # Country details | Difficulty | Hint count
+        Help(self, self.country_details, self.difficulty_playing, self.hints_counter)
 
     def to_stats(self):
         # Displays Stats (with stats list for the question)
-
         Stats(self, self.all_stats_list)
 
 
@@ -532,12 +526,12 @@ class Stats:
         # retrieve necessary stats for the strings and labels
         target_country = all_stats[0][0]
         target_capital = all_stats[0][1]
+        questions_answered = all_stats[0][4]
         difficulty_playing = all_stats[1]
         hint_count = all_stats[2][0]
         reroll_count = all_stats[2][1]
-        questions_answered = all_stats[2][2]
-        country_streak = all_stats[2][3]
-        capital_streak = all_stats[2][4]
+        country_streak = all_stats[2][2]
+        capital_streak = all_stats[2][3]
 
         # Fonts for strings
         heading_font = ("Arial", 20, "bold")
@@ -548,9 +542,11 @@ class Stats:
 
         # Strings for the stats labels...
         question_stats_string = (f"Difficulty: {difficulty_playing}"
-                                 f"\nQuestions Answered: {questions_answered}")
+                                 f"\nQuestions Answered: {questions_answered+1}")
         additional_stats_string = (f"Rerolls: {reroll_count}"
                               f"\nHints Used: {hint_count}")
+        comment_string = "No correct guesses yet, keep going!"
+
 
 
         # if rerolls > 1, show user how many points they've been penalised...
@@ -559,7 +555,7 @@ class Stats:
         stats_labels_list = [
             ["Statistics", heading_font, "W"],
             [question_stats_string, body_font, "W"],
-            [f"\nQuestion {questions_answered-1}'s country was..",  round_font, "W"],
+            [f"\nQuestion {questions_answered}'s country was..",  round_font, "W"],
             [target_country, answer_font, "nsew"],
             ["The Capital of this country is..",  round_font, "W"],
             [target_capital+"\n", answer_font, "nsew"],
@@ -588,12 +584,6 @@ class Stats:
                                    command=partial(self.close_stats, partner))
         self.close_button.grid(row=10, padx=10, pady=20)
 
-
-
-
-
-
-
     def close_stats(self, partner):
         """Closes the Stats GUI"""
         # put hint button state to normal
@@ -613,10 +603,13 @@ class Help:
     flag codes. Capital is given on lower difficulties )
     """
 
-    def __init__(self, partner, capital, image, code, difficulty, hint_count, questions_answered):
+    def __init__(self, partner, country_details, difficulty, hint_count):
 
-        # Get variables to be used for later
-        self.questions_answered = questions_answered
+        # retrieve necessary variables to be used for later
+        capital = country_details[1]
+        code = country_details[2]
+        image = country_details[3]
+        self.questions_answered = country_details[4]
 
         # set up help window and background
         background = '#ADD8E6'
@@ -626,11 +619,10 @@ class Help:
         self.help_box.protocol('WM_DELETE_WINDOW',
                                partial(self.close_hints, partner))
 
-        # disable buttons
+        # disable control buttons
         partner.hints_button.config(state="disabled")
         partner.end_game_button.config(state="disabled")
         partner.stats_button.config(state="disabled")
-
 
         # set up help frame
         help_frame = Frame(self.help_box, width=500, height=200)
@@ -638,7 +630,7 @@ class Help:
 
         help_frame.config(bg=background)
 
-        # Image area
+        # Create image for the
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
                       f"Programming level 2 & 3/Flags/flag_images/{image}")
         image = Image.open(f"{photo_path}")
