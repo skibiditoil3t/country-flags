@@ -3,6 +3,7 @@ import random
 from tkinter import *
 from functools import partial  # To prevent unwanted windows
 from PIL import Image, ImageTk
+from setuptools.windows_support import hide_file
 
 
 def get_all_flags():
@@ -350,8 +351,7 @@ class Play:
         if self.difficulty_playing == "medium":
             self.question_type = "capital"
             self.capital()
-
-            self.capital_button.config(state="normal")
+            self.capital_button.config(state="disabled")
 
         # Configuration area for control / country buttons
         self.heading_label.config(text=f"Question: {questions_answered} / "
@@ -423,9 +423,20 @@ class Play:
         correct_capital_string = f"Capital: N/A (Play on higher difficulties to answer this!)\n"
 
         if self.difficulty_playing == "medium":
-            if self.question_type != "capital":
-                self.capital_button.config(state="normal")
+            self.capital_button.config(state="normal")
             correct_capital_string = f"Capital: {self.correct_capital} / {questions_wanted}\n"
+            hidden_capital_string = "Answer the capital section first!"
+
+            # replace target capital with string to prevent cheating
+            if self.question_type == "country":
+                self.country_details.pop(1)
+                self.country_details.insert(1, hidden_capital_string)
+
+            # when capital section has been answered, check for string and replace with real capital
+            elif self.country_details[1] == hidden_capital_string  and questions_answered >= 0:
+                self.capital_button.config(state="disabled")
+                self.country_details.pop(1)
+                self.country_details.insert(1, self.target_capital)
 
         # update strings when there's a streak
         if self.country_streak >= 2:
@@ -450,6 +461,9 @@ class Play:
     def capital(self):
         # Changes the question from answering target country to target capital
 
+        # Add 1 to the number of questions answered
+        questions_answered = self.questions_answered.get()
+
         if self.question_type == "capital":
             self.question_type = "country"
             self.question_label.config(text="What Country Is This?")
@@ -457,37 +471,44 @@ class Play:
 
             for count, item in enumerate(self.country_button_ref):
                 item.config(text=self.question_country_list[count][0], bg="#DAE8FC")
-        else:
+
+        elif self.question_type == "country":
             self.question_type = "capital"
             self.question_label.config(text="What's the capital of this country?")
-            self.capital_button.config(text="Country", bg="#DAE8FC", state="disabled")
+            self.capital_button.config(state="disabled")
             self.next_question.config(state="disabled")
 
-            # Add 1 to the number of questions answered
-            questions_answered = self.questions_answered.get()
-            questions_answered += 1
+            questions_answered -= 1
             self.questions_answered.set(questions_answered)
-
 
             for count, item in enumerate(self.country_button_ref):
                 item.config(text=self.question_country_list[count][1], bg="#E1D5E7", state="normal")
 
+
     def reroll(self):
 
         # Rerolls the target country and capital for the user
+
         self.reroll_counter += 1
-        self.points_penalised -= 1
 
         self.new_question()
 
         self.result_label.config(text=f"You've rerolled a total of {self.reroll_counter} time/s")
 
         # penalise points for rerolling
+        if len(self.additional_stats) > 1:
+            self.additional_stats.pop(1)
+            self.additional_stats.insert(1, self.reroll_counter)
+
         # PLACEHOLDER
 
     def to_hints(self):
         # Displays Help GUI and retrieves difficulty
         self.hints_counter += 1
+
+        if len(self.additional_stats) > 1:
+            self.additional_stats.pop(0)
+            self.additional_stats.insert(0, self.hints_counter)
 
         # Country details | Difficulty | Hint count
         Help(self, self.country_details, self.difficulty_playing, self.hints_counter)
@@ -545,9 +566,6 @@ class Stats:
                                  f"\nQuestions Answered: {questions_answered+1}")
         additional_stats_string = (f"Rerolls: {reroll_count}"
                               f"\nHints Used: {hint_count}")
-        comment_string = "No correct guesses yet, keep going!"
-
-
 
         # if rerolls > 1, show user how many points they've been penalised...
 
@@ -673,7 +691,8 @@ class Help:
         partner.hints_button.config(state="normal")
         partner.end_game_button.config(state="normal")
 
-        if self.questions_answered > 1:
+        if self.questions_answered >= 1:
+            print(self.questions_answered, "<< this is normal")
             partner.stats_button.config(state="normal")
 
         # destroy play GUI and go back to StartGame GUI
