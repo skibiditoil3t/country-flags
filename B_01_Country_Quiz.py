@@ -1,5 +1,6 @@
 import csv
 import random
+from distutils.fancy_getopt import wrap_text
 from tkinter import *
 from functools import partial  # To prevent unwanted windows
 from PIL import Image, ImageTk
@@ -179,7 +180,7 @@ class Play:
 
         # Lists for stats
         self.all_stats_list = []
-        self.country_details = []
+        self.question_details = []
         self.additional_stats = []
 
         # set up how many questions...
@@ -258,7 +259,7 @@ class Play:
         # control button list (frame, text, bg, row, column, font, command, width)
         control_button_list = [
             [self.play_frame, "Next Question", "#FFF2CC", 7, 0, ("Arial", 16, "bold"), self.new_question, 20],
-            [self.control_button_frame, "Help", "#ADD8E6", 0, 0, ("Arial", 13, "bold"), self.to_hints, 12],
+            [self.control_button_frame, "Help", "#FFE6CC", 0, 0, ("Arial", 13, "bold"), self.to_hints, 12],
             [self.control_button_frame, "Stats", "#F5F5F5", 0, 1, ("Arial", 13, "bold"), self.to_stats, 12],
             [self.play_frame, "End Quiz", "#F8CECC", 9, 0, ("Arial", 16, "bold"), self.close_quiz, 20]
         ]
@@ -325,8 +326,8 @@ class Play:
         self.country_flag = self.question_country_list[shuffle][3]
 
         # Gather this question's country details for help and for stats
-        self.country_details = [self.target_country, self.target_capital, self.country_code, self.country_flag,
-                                questions_answered]
+        self.question_details = [self.target_country, self.target_capital, self.country_code, self.country_flag,
+                                 questions_answered]
 
         # create flag image for the question
         photo_path = (f"/users/afematam2360/OneDrive - Massey High School/"
@@ -341,11 +342,22 @@ class Play:
         image_label.image = img
         image_label.grid(row=1)
 
+        # Configuration area for control / country buttons
+        self.heading_label.config(text=f"Question: {questions_answered} / "
+                                       f"{questions_wanted}")
+        self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
+        self.next_question.config(state="disabled")
+
         # enable stats when user has completed a round
         if questions_answered >= 1:
             self.stats_button.config(state="normal")
         else:
             self.stats_button.config(state="disabled")
+
+        for count, item in enumerate(self.country_button_ref):
+            item.config(text=self.question_country_list[count][0], bg="#DAE8FC",
+                        state="normal")
+
 
         # change question type back to capital to get country names for next question
         if self.difficulty_playing == "medium":
@@ -353,15 +365,6 @@ class Play:
             self.capital()
             self.capital_button.config(state="disabled")
 
-        # Configuration area for control / country buttons
-        self.heading_label.config(text=f"Question: {questions_answered} / "
-                                       f"{questions_wanted}")
-        self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
-        self.next_question.config(state="disabled")
-
-        for count, item in enumerate(self.country_button_ref):
-            item.config(text=self.question_country_list[count][0], bg="#DAE8FC",
-                        state="normal")
 
     def question_outcome(self, user_choice):
         """
@@ -370,7 +373,22 @@ class Play:
         """
 
         # gets what the user picked, used to compare later
-        answer = self.country_button_ref[user_choice].cget('text')
+        user_answer = self.country_button_ref[user_choice].cget('text')
+
+        # find the target button for the user
+        target_button = [index for (index, item) in enumerate(self.country_button_ref)
+                         if item.cget('text') == self.target_country]
+
+        # if question type switched to capital, look for target capital
+        if self.question_type == "capital":
+            target_button = [index for (index, item) in enumerate(self.country_button_ref)
+                             if item.cget('text') == self.target_capital]
+        target_button_index = target_button[0]
+
+        # get the target answer button and configure it as the correct answer
+        target_answer = self.country_button_ref[target_button_index]
+        target_answer.config(bg="#D5E8D4")
+
 
         # disable main question buttons / other control buttons
         # enable next rounds for user to continue
@@ -378,20 +396,21 @@ class Play:
             item.config(state="disabled")
             self.next_question.config(state="normal", text="Next Question")
 
+
         # Compare the user choice (answer) with target country or capital for the question
         # Update correct guesses for either country / capital and update streak..
-        if answer == self.target_country:
+        if user_answer == self.target_country:
             self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_country}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
             self.country_streak += 1
             self.correct_country += 1
-        elif answer == self.target_capital:
+        elif user_answer == self.target_capital:
             self.result_label.config(text=f"Correct! The {self.question_type} is {self.target_capital}.", bg="#D5E8D4")
             self.country_button_ref[user_choice].config(bg="#D5E8D4")
             self.capital_streak += 1
             self.correct_capital += 1
 
-        elif self.question_type == "capital" and answer != self.target_capital:
+        elif self.question_type == "capital" and user_answer != self.target_capital:
             self.result_label.config(text=f"Incorrect, the {self.question_type} is {self.target_capital}.",
                                      bg="#E8D4D4")
             self.country_button_ref[user_choice].config(bg="#E8D4D4")
@@ -420,23 +439,25 @@ class Play:
 
         # create string to show how much correct guesses user has made for country / capital
         correct_country_string = f"Country: {self.correct_country} / {questions_wanted}"
-        correct_capital_string = f"Capital: N/A (Play on higher difficulties to answer this!)\n"
+        correct_capital_string = f"Capital: N/A\n"
 
         if self.difficulty_playing == "medium":
+            # enable capital button after question is done
             self.capital_button.config(state="normal")
             correct_capital_string = f"Capital: {self.correct_capital} / {questions_wanted}\n"
             hidden_capital_string = "Answer the capital section first!"
 
-            # replace target capital with string to prevent cheating
+            # replaces target capital with hidden string to prevent cheating
             if self.question_type == "country":
-                self.country_details.pop(1)
-                self.country_details.insert(1, hidden_capital_string)
+                self.question_label.config(text="Press 'Capital' to answer for bonus points!", wraplength=200)
+                self.question_details.pop(1)
+                self.question_details.insert(1, hidden_capital_string)
 
             # when capital section has been answered, check for string and replace with real capital
-            elif self.country_details[1] == hidden_capital_string  and questions_answered >= 0:
+            elif self.question_details[1] == hidden_capital_string  and questions_answered >= 0:
                 self.capital_button.config(state="disabled")
-                self.country_details.pop(1)
-                self.country_details.insert(1, self.target_capital)
+                self.question_details.pop(1)
+                self.question_details.insert(1, self.target_capital)
 
         # update strings when there's a streak
         if self.country_streak >= 2:
@@ -448,9 +469,9 @@ class Play:
         # additional stats which is used to be used later
         self.additional_stats = [self.hints_counter, self.reroll_counter, correct_country_string, correct_capital_string]
 
-        # Get all stats into one big list
+        # Get all stats into a master list
         # Country Details | Difficulty | Additional Stats
-        self.all_stats_list = [self.country_details, self.difficulty_playing,
+        self.all_stats_list = [self.question_details, self.difficulty_playing,
                                self.additional_stats]
 
     def close_quiz(self):
@@ -486,16 +507,16 @@ class Play:
 
 
     def reroll(self):
-
         # Rerolls the target country and capital for the user
 
+        # update reroll counter and labels
         self.reroll_counter += 1
-
-        self.new_question()
-
         self.result_label.config(text=f"You've rerolled a total of {self.reroll_counter} time/s")
 
-        # penalise points for rerolling
+        # "reroll" question for the user
+        self.new_question()
+
+        # Updates reroll counter in stats in real time
         if len(self.additional_stats) > 1:
             self.additional_stats.pop(1)
             self.additional_stats.insert(1, self.reroll_counter)
@@ -503,15 +524,16 @@ class Play:
         # PLACEHOLDER
 
     def to_hints(self):
-        # Displays Help GUI and retrieves difficulty
+        # Displays Help GUI
         self.hints_counter += 1
 
+        # Updates hints counter inr eal time
         if len(self.additional_stats) > 1:
             self.additional_stats.pop(0)
             self.additional_stats.insert(0, self.hints_counter)
 
         # Country details | Difficulty | Hint count
-        Help(self, self.country_details, self.difficulty_playing, self.hints_counter)
+        Help(self, self.question_details, self.difficulty_playing, self.hints_counter)
 
     def to_stats(self):
         # Displays Stats (with stats list for the question)
@@ -565,6 +587,10 @@ class Stats:
         question_stats_string = (f"Difficulty: {difficulty_playing}"
                                  f"\nQuestions Answered: {questions_answered+1}")
         additional_stats_string = (f"Rerolls: {reroll_count}"
+                              f"\nHints Used: {hint_count}")
+
+        if difficulty_playing == "normal":
+            additional_stats_string = (f"Rerolls: N/A"
                               f"\nHints Used: {hint_count}")
 
         # if rerolls > 1, show user how many points they've been penalised...
@@ -630,7 +656,7 @@ class Help:
         self.questions_answered = country_details[4]
 
         # set up help window and background
-        background = '#ADD8E6'
+        background = '#FFE6CC'
         self.help_box = Toplevel()
 
         # if 'x' at window is pressed, end all processes
@@ -682,8 +708,9 @@ class Help:
         for item in recolour_list:
             item.config(bg=background)
 
-    #close_button = Button(help_frame, font=("Arial", 16, "bold"), text="Close", bg="#333333", fg="#FFFFFF", width=20, command=partial(self.close_hints, partner))
-    #close_button.grid(row=10, padx=10, pady=20)
+        close_button = Button(help_frame, font=("Arial", 16, "bold"), text="Close", bg="#F5F5F5",
+                              fg="#000000", width=20, command=partial(self.close_hints, partner))
+        close_button.grid(row=10, padx=10, pady=20)
 
     def close_hints(self, partner):
         """Closes the Help GUI"""
@@ -692,7 +719,6 @@ class Help:
         partner.end_game_button.config(state="normal")
 
         if self.questions_answered >= 1:
-            print(self.questions_answered, "<< this is normal")
             partner.stats_button.config(state="normal")
 
         # destroy play GUI and go back to StartGame GUI
