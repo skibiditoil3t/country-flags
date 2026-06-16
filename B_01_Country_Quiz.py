@@ -1,10 +1,8 @@
 import csv
 import random
-from distutils.fancy_getopt import wrap_text
 from tkinter import *
 from functools import partial  # To prevent unwanted windows
 from PIL import Image, ImageTk
-from setuptools.windows_support import hide_file
 
 
 def get_all_flags():
@@ -28,6 +26,7 @@ def get_country():
 
     while len(round_countries) < 4:
         potential_country = random.choice(all_flags)
+        print(potential_country)
 
         if potential_country[0] not in round_countries:
             # append country with details
@@ -36,7 +35,7 @@ def get_country():
     return round_countries
 
 
-class StartGame:
+class StartQuiz:
     """ Initial Game interface (asks users how many questions they
     would like to play) """
 
@@ -150,7 +149,7 @@ class StartGame:
         if self.infinite_questions == "no":
             self.infinite_questions = "yes"
             self.num_questions_entry.config(state='disabled', bg="#FFFFFF")
-            self.choose_label.config(text="You've chosen infinite questions!", fg="#009900")
+            self.choose_label.config(text="Infinite questions has been chosen! \nPress again to toggle off.", fg="#009900")
 
         else:
             self.infinite_questions = "no"
@@ -319,7 +318,7 @@ class Play:
         # testing and shuffling for the questions
         shuffle = random.randint(0, 3)
 
-        # set up target country / capital
+        # set up target country and add its details for later use
         self.target_country = self.question_country_list[shuffle][0]
         self.target_capital = self.question_country_list[shuffle][1]
         self.country_code = self.question_country_list[shuffle][2]
@@ -342,7 +341,7 @@ class Play:
         image_label.image = img
         image_label.grid(row=1)
 
-        # Configuration area for control / country buttons
+        # Configuration area for labels and control / country buttons
         self.heading_label.config(text=f"Question: {questions_answered} / "
                                        f"{questions_wanted}")
         self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
@@ -426,8 +425,7 @@ class Play:
         questions_answered += 1
         self.questions_answered.set(questions_answered)
 
-        # Check if questions answered should infinitely continue
-        # Or if they match the questions wanted..
+        # Checks for infinity or if questions answered match questions wanted
         if self.questions_wanted == "Infinite":
             questions_wanted = f"{questions_answered}"
         else:
@@ -436,25 +434,27 @@ class Play:
             if questions_answered == questions_wanted:
                 self.heading_label.config(text=f"Question: {questions_answered} / {questions_wanted}")
                 self.next_question.config(state='disabled', text="Quiz finished!")
+                self.end_game_button.config(text="Play again?", bg="#D5E8D4")
 
         # create string to show how much correct guesses user has made for country / capital
         correct_country_string = f"Country: {self.correct_country} / {questions_wanted}"
         correct_capital_string = f"Capital: N/A\n"
 
         if self.difficulty_playing == "medium":
-            # enable capital button after question is done
             self.capital_button.config(state="normal")
             correct_capital_string = f"Capital: {self.correct_capital} / {questions_wanted}\n"
+
+            # string to hide the capital of the country in Stats GUI
             hidden_capital_string = "Answer the capital section first!"
 
-            # replaces target capital with hidden string to prevent cheating
+            # replaces the target capital string in Stats to prevent cheating
             if self.question_type == "country":
                 self.question_label.config(text="Press 'Capital' to answer for bonus points!", wraplength=200)
                 self.question_details.pop(1)
                 self.question_details.insert(1, hidden_capital_string)
 
-            # when capital section has been answered, check for string and replace with real capital
-            elif self.question_details[1] == hidden_capital_string  and questions_answered >= 0:
+            # check for hidden string and replace with target capital when question has been answered
+            elif self.question_details[1] == hidden_capital_string:
                 self.capital_button.config(state="disabled")
                 self.question_details.pop(1)
                 self.question_details.insert(1, self.target_capital)
@@ -485,6 +485,8 @@ class Play:
         # Add 1 to the number of questions answered
         questions_answered = self.questions_answered.get()
 
+        # Configures capital based on the question type
+        # SIDENOTE: Question type is used to determine what the buttons configure to..
         if self.question_type == "capital":
             self.question_type = "country"
             self.question_label.config(text="What Country Is This?")
@@ -729,5 +731,5 @@ class Help:
 if __name__ == "__main__":
     root = Tk()
     root.title("Country Flags")
-    StartGame()
+    StartQuiz()
     root.mainloop()
