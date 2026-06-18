@@ -342,7 +342,7 @@ class Play:
         image_label.grid(row=1)
 
         # Configuration area for labels and control / country buttons
-        self.heading_label.config(text=f"Question: {questions_answered} / "
+        self.heading_label.config(text=f"Question: {questions_answered+1} / "
                                        f"{questions_wanted}")
         self.result_label.config(text=f"{'=' * 20}", bg="#F0F0F0")
         self.next_question.config(state="disabled")
@@ -432,7 +432,6 @@ class Play:
             questions_wanted = self.questions_wanted.get()
 
             if questions_answered == questions_wanted:
-                self.heading_label.config(text=f"Question: {questions_answered} / {questions_wanted}")
                 self.next_question.config(state='disabled', text="Quiz finished!")
                 self.end_game_button.config(text="Play again?", bg="#D5E8D4")
 
@@ -601,7 +600,7 @@ class Stats:
         stats_labels_list = [
             ["Statistics", heading_font, "W"],
             [question_stats_string, body_font, "W"],
-            [f"\nQuestion {questions_answered}'s country was..",  round_font, "W"],
+            [f"\nQuestion {questions_answered+1}'s country was..",  round_font, "W"],
             [target_country, answer_font, "nsew"],
             ["The Capital of this country is..",  round_font, "W"],
             [target_capital+"\n", answer_font, "nsew"],
