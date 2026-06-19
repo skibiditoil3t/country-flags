@@ -433,6 +433,7 @@ class Play:
 
             if questions_answered == questions_wanted:
                 self.next_question.config(state='disabled', text="Quiz finished!")
+                self.reroll_button.config(state='disabled')
                 self.end_game_button.config(text="Play again?", bg="#D5E8D4")
 
         # create string to show how much correct guesses user has made for country / capital
